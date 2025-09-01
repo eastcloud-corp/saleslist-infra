@@ -32,10 +32,62 @@ jobs:
             sudo tee .env << EOF
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-            ALLOWED_HOSTS=153.120.128.27,localhost
-            CORS_ALLOWED_ORIGINS=http://153.120.128.27,http://localhost:3000
-            NEXT_PUBLIC_API_URL=http://localhost:8000
+            ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
+            CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp,http://153.120.128.27,http://localhost:3000
+            NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp/api/v1
             EOF
+            
+            # Initial setup (only run if needed)
+            if [ ! -f "/etc/nginx/sites-enabled/default" ]; then
+              echo "🔧 初回セットアップ実行"
+              
+              # Install Nginx and Certbot
+              sudo apt install -y nginx certbot python3-certbot-nginx
+              
+              # Setup Nginx configuration
+              sudo tee /etc/nginx/sites-enabled/default << 'NGINX_EOF'
+            server {
+                listen 80;
+                listen 443 ssl;
+                server_name sales-navigator.east-cloud.jp;
+                
+                ssl_certificate /etc/letsencrypt/live/sales-navigator.east-cloud.jp/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/sales-navigator.east-cloud.jp/privkey.pem;
+                
+                location / {
+                    proxy_pass http://localhost:3000;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+                
+                location /api/ {
+                    proxy_pass http://localhost:8000/api/;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+                
+                location /admin/ {
+                    proxy_pass http://localhost:8000/admin/;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+            }
+            NGINX_EOF
+              
+              # Get SSL certificate
+              sudo systemctl start nginx
+              sudo certbot --nginx -d sales-navigator.east-cloud.jp --non-interactive --agree-tos --email admin@budget-sales.com || true
+              
+              # Setup log structure
+              sudo bash /opt/salesnav/saleslist-infra/scripts/setup-log-structure.sh
+              
+              # Setup cron jobs
+              sudo bash /opt/salesnav/saleslist-infra/scripts/setup-ssl-cron.sh
+              
+              echo "✅ 初回セットアップ完了"
+            else
+              echo "⚡ 既存環境での更新デプロイ"
+            fi
             
             # Setup and start containers
             sudo docker compose down || true
