@@ -24,3 +24,6 @@ image_tag = "latest"
 
 # GitHub organization
 github_organization = "eastcloud-corp"
+
+# Custom domain
+custom_domain = "sales-navigator.sakura.app"

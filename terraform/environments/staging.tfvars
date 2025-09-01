@@ -24,3 +24,6 @@ image_tag = "staging"
 
 # GitHub organization
 github_organization = "eastcloud-corp"
+
+# Custom domain
+custom_domain = "sales-navigator-staging.sakura.app"

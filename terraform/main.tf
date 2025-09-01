@@ -187,6 +187,11 @@ resource "sakuracloud_app_run" "backend" {
 resource "sakuracloud_app_run" "frontend" {
   name = "${local.app_name}-frontend-${local.environment}"
   
+  # Custom domain configuration
+  custom_domain {
+    name = var.custom_domain
+  }
+  
   container {
     name  = "nextjs"
     image = "ghcr.io/${var.github_organization}/saleslist-front:${var.image_tag}"

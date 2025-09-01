@@ -21,6 +21,12 @@ variable "github_organization" {
   type        = string
 }
 
+variable "custom_domain" {
+  description = "Custom domain for frontend (e.g., sales-navigator.sakura.app)"
+  type        = string
+  default     = ""
+}
+
 # Database variables
 variable "db_name" {
   description = "Database name"
