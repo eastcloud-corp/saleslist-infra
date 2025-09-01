@@ -54,7 +54,7 @@ services:
     volumes:
       - backend_static_prd:/app/static
       - backend_media_prd:/app/media
-      - backend_logs_prd:/app/logs
+      - /var/log/salesnav/backend:/app/logs
     depends_on:
       db:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
     ports:
       - "80:3000"
     volumes:
-      - frontend_logs_prd:/var/log/nginx
+      - /var/log/salesnav/frontend:/var/log/nginx
     depends_on:
       backend:
         condition: service_healthy
