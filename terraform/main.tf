@@ -30,57 +30,38 @@ locals {
 
 # Database App Run (PostgreSQL)
 resource "sakuracloud_apprun_application" "database" {
-  name = "${local.app_name}-db-${local.environment}"
-  
-  container {
-    name  = "postgres"
-    image = "postgres:15-alpine"
-    
-    environment_variable {
+  name            = "${local.app_name}-db-${local.environment}"
+  timeout_seconds = 60
+  port            = 5432
+  min_scale       = 1
+  max_scale       = 1
+
+  components {
+    name       = "postgres"
+    max_cpu    = "${var.db_cpu}m"
+    max_memory = "${var.db_memory}Mi"
+
+    deploy_source {
+      container_registry {
+        image    = "postgres:15-alpine"
+        username = ""
+        password = ""
+      }
+    }
+
+    env {
       name  = "POSTGRES_DB"
       value = var.db_name
     }
     
-    environment_variable {
+    env {
       name  = "POSTGRES_USER"
       value = var.db_user
     }
     
-    environment_variable {
+    env {
       name  = "POSTGRES_PASSWORD"
       value = var.db_password
-    }
-    
-    environment_variable {
-      name  = "POSTGRES_INITDB_ARGS"
-      value = "--encoding=UTF-8 --locale=ja_JP.UTF-8"
-    }
-    
-    port {
-      container_port = 5432
-      protocol       = "TCP"
-    }
-    
-    resource {
-      cpu    = var.db_cpu
-      memory = var.db_memory
-    }
-    
-    volume {
-      name       = "postgres-data"
-      mount_path = "/var/lib/postgresql/data"
-      size       = var.db_volume_size
-    }
-  }
-  
-  network_policy {
-    ingress_policy = "DENY"
-    
-    # Allow only backend to access database
-    ingress_rule {
-      action = "ALLOW"
-      source = sakuracloud_apprun_application.backend.id
-      port   = "5432"
     }
   }
   
@@ -89,94 +70,63 @@ resource "sakuracloud_apprun_application" "database" {
 
 # Backend App Run (Django)
 resource "sakuracloud_apprun_application" "backend" {
-  name = "${local.app_name}-backend-${local.environment}"
-  
-  container {
-    name  = "django"
-    image = "ghcr.io/${var.github_organization}/saleslist-backend:${var.image_tag}"
-    
-    environment_variable {
+  name            = "${local.app_name}-backend-${local.environment}"
+  timeout_seconds = 60
+  port            = 8000
+  min_scale       = 1
+  max_scale       = 3
+
+  components {
+    name       = "django"
+    max_cpu    = "${var.backend_cpu}m"
+    max_memory = "${var.backend_memory}Mi"
+
+    deploy_source {
+      container_registry {
+        image    = "ghcr.io/${var.github_organization}/saleslist-backend:${var.image_tag}"
+        username = var.github_organization
+        password = ""
+      }
+    }
+
+    env {
       name  = "DEBUG"
       value = "False"
     }
     
-    environment_variable {
+    env {
       name  = "ALLOWED_HOSTS"
       value = var.allowed_hosts
     }
     
-    environment_variable {
+    env {
       name  = "DB_HOST"
       value = sakuracloud_apprun_application.database.fqdn
     }
     
-    environment_variable {
+    env {
       name  = "DB_NAME"
       value = var.db_name
     }
     
-    environment_variable {
+    env {
       name  = "DB_USER"
       value = var.db_user
     }
     
-    environment_variable {
+    env {
       name  = "DB_PASSWORD"
       value = var.db_password
     }
     
-    environment_variable {
-      name  = "DB_PORT"
-      value = "5432"
-    }
-    
-    environment_variable {
+    env {
       name  = "SECRET_KEY"
       value = var.django_secret_key
     }
     
-    environment_variable {
+    env {
       name  = "CORS_ALLOWED_ORIGINS"
       value = var.cors_allowed_origins
-    }
-    
-    port {
-      container_port = 8000
-      protocol       = "TCP"
-    }
-    
-    resource {
-      cpu    = var.backend_cpu
-      memory = var.backend_memory
-    }
-    
-    probe {
-      type               = "HTTP"
-      path               = "/health"
-      port               = 8000
-      initial_delay      = 30
-      period             = 10
-      timeout            = 5
-      failure_threshold  = 3
-    }
-  }
-  
-  network_policy {
-    ingress_policy = "DENY"
-    
-    # Allow frontend to access backend
-    ingress_rule {
-      action = "ALLOW"
-      source = sakuracloud_apprun_application.frontend.id
-      port   = "8000"
-    }
-    
-    # Allow external health checks
-    ingress_rule {
-      action = "ALLOW"
-      source = "0.0.0.0/0"
-      port   = "8000"
-      path   = "/health"
     }
   }
   
@@ -187,101 +137,42 @@ resource "sakuracloud_apprun_application" "backend" {
 resource "sakuracloud_apprun_application" "frontend" {
   name = "${local.app_name}-frontend-${local.environment}"
   
-  # Custom domain configuration
-  custom_domain {
-    name = var.custom_domain
-  }
-  
-  container {
-    name  = "nextjs"
-    image = "ghcr.io/${var.github_organization}/saleslist-front:${var.image_tag}"
-    
-    environment_variable {
+  timeout_seconds = 60
+  port            = 3000
+  min_scale       = 1
+  max_scale       = 3
+
+  components {
+    name       = "nextjs"
+    max_cpu    = "${var.frontend_cpu}m"
+    max_memory = "${var.frontend_memory}Mi"
+
+    deploy_source {
+      container_registry {
+        image    = "ghcr.io/${var.github_organization}/saleslist-front:${var.image_tag}"
+        username = var.github_organization
+        password = ""
+      }
+    }
+
+    env {
       name  = "NODE_ENV"
       value = "production"
     }
     
-    environment_variable {
+    env {
       name  = "NEXT_PUBLIC_API_URL"
       value = "https://${sakuracloud_apprun_application.backend.fqdn}"
     }
     
-    environment_variable {
+    env {
       name  = "PORT"
       value = "3000"
-    }
-    
-    port {
-      container_port = 80
-      protocol       = "TCP"
-    }
-    
-    resource {
-      cpu    = var.frontend_cpu
-      memory = var.frontend_memory
-    }
-    
-    probe {
-      type               = "HTTP"
-      path               = "/health"
-      port               = 80
-      initial_delay      = 30
-      period             = 10
-      timeout            = 5
-      failure_threshold  = 3
-    }
-  }
-  
-  network_policy {
-    ingress_policy = "ALLOW"
-    
-    ingress_rule {
-      action = "ALLOW"
-      source = "0.0.0.0/0"
-      port   = "80"
-    }
-    
-    ingress_rule {
-      action = "ALLOW"
-      source = "0.0.0.0/0"
-      port   = "443"
     }
   }
   
   tags = values(local.common_tags)
 }
 
-# Enhanced Global Access Filter (Firewall)
-resource "sakuracloud_packet_filter" "main" {
-  name        = "${local.app_name}-firewall-${local.environment}"
-  description = "Firewall for saleslist application"
-  
-  expression {
-    protocol    = "tcp"
-    source_port = "80"
-    allow       = true
-    description = "Allow HTTP"
-  }
-  
-  expression {
-    protocol    = "tcp"
-    source_port = "443"
-    allow       = true
-    description = "Allow HTTPS"
-  }
-  
-  expression {
-    protocol    = "tcp"
-    source_port = "8000"
-    allow       = true
-    description = "Allow backend access"
-  }
-  
-  expression {
-    protocol    = "tcp"
-    allow       = false
-    description = "Deny all other TCP"
-  }
-  
-  tags = values(local.common_tags)
-}
+# Note: App Run applications have built-in firewall
+# No additional packet filter needed for basic setup
