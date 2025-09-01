@@ -69,11 +69,13 @@ services:
     build:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/frontend/Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: saleslist_frontend_prd
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sales-navigator.east-cloud.jp}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     ports:
       - "3000:3000"
     volumes:
