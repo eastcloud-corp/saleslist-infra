@@ -23,4 +23,4 @@ frontend_memory = 512
 image_tag = "latest"
 
 # GitHub organization
-github_organization = "ec-ko-kikuchi"
+github_organization = "eastcloud-corp"
