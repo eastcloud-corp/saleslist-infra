@@ -26,8 +26,8 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs \
-    && adduser -S nextjs -u 1001 \
+RUN groupadd --gid 1001 nodejs \
+    && useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nextjs \
     && chown -R nextjs:nodejs /app
 
 USER nextjs
