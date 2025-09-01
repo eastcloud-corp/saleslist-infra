@@ -38,8 +38,8 @@ resource "sakuracloud_apprun_application" "database" {
 
   components {
     name       = "postgres"
-    max_cpu    = "${var.db_cpu}m"
-    max_memory = "${var.db_memory}Mi"
+    max_cpu    = var.db_cpu
+    max_memory = var.db_memory
 
     deploy_source {
       container_registry {
@@ -76,8 +76,8 @@ resource "sakuracloud_apprun_application" "backend" {
 
   components {
     name       = "django"
-    max_cpu    = "${var.backend_cpu}m"
-    max_memory = "${var.backend_memory}Mi"
+    max_cpu    = var.backend_cpu
+    max_memory = var.backend_memory
 
     deploy_source {
       container_registry {
@@ -140,8 +140,8 @@ resource "sakuracloud_apprun_application" "frontend" {
 
   components {
     name       = "nextjs"
-    max_cpu    = "${var.frontend_cpu}m"
-    max_memory = "${var.frontend_memory}Mi"
+    max_cpu    = var.frontend_cpu
+    max_memory = var.frontend_memory
 
     deploy_source {
       container_registry {

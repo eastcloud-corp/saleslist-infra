@@ -47,15 +47,15 @@ variable "db_password" {
 }
 
 variable "db_cpu" {
-  description = "Database CPU allocation (millicores)"
-  type        = number
-  default     = 500
+  description = "Database CPU allocation"
+  type        = string
+  default     = "0.5"
 }
 
 variable "db_memory" {
-  description = "Database memory allocation (Mi)"
-  type        = number
-  default     = 1024
+  description = "Database memory allocation"
+  type        = string
+  default     = "1Gi"
 }
 
 variable "db_volume_size" {
@@ -66,15 +66,15 @@ variable "db_volume_size" {
 
 # Backend variables
 variable "backend_cpu" {
-  description = "Backend CPU allocation (millicores)"
-  type        = number
-  default     = 1000
+  description = "Backend CPU allocation"
+  type        = string
+  default     = "0.5"
 }
 
 variable "backend_memory" {
-  description = "Backend memory allocation (Mi)"
-  type        = number
-  default     = 2048
+  description = "Backend memory allocation"
+  type        = string
+  default     = "1Gi"
 }
 
 variable "django_secret_key" {
@@ -97,13 +97,13 @@ variable "cors_allowed_origins" {
 
 # Frontend variables
 variable "frontend_cpu" {
-  description = "Frontend CPU allocation (millicores)"
-  type        = number
-  default     = 500
+  description = "Frontend CPU allocation"
+  type        = string
+  default     = "0.3"
 }
 
 variable "frontend_memory" {
-  description = "Frontend memory allocation (Mi)"
-  type        = number
-  default     = 1024
+  description = "Frontend memory allocation"
+  type        = string
+  default     = "512Mi"
 }
