@@ -40,7 +40,7 @@ services:
   backend:
     build:
       context: /opt/salesnav
-      dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
+      dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend_prd
     env_file:
       - ../../env/backend.prod.env
@@ -70,8 +70,8 @@ services:
   # Next.js Frontend
   frontend:
     build:
-      context: ../../..
-      dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.prod
+      context: /opt/salesnav
+      dockerfile: saleslist-infra/docker/frontend/Dockerfile.prod
     container_name: saleslist_frontend_prd
     env_file:
       - ../../env/frontend.prod.env

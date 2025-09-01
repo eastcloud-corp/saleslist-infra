@@ -30,14 +30,20 @@ jobs:
             # Setup and start containers
             cd /opt/salesnav/saleslist-infra/docker-compose/prd
             sudo docker compose down || true
-            sudo docker compose up -d
+            sudo docker compose up -d --build
             
             # Wait for services to start
-            sleep 30
+            sleep 60
             
-            # Health check
-            curl -f http://localhost || echo "Frontend not ready"
-            curl -f http://localhost/api/health/db || echo "Backend not ready"
+            # Health check with error handling
+            if sudo docker compose ps | grep -q "Up"; then
+              echo "✅ Services started"
+              sudo docker compose logs --tail=5
+            else
+              echo "❌ Services failed"
+              sudo docker compose logs
+              exit 1
+            fi
             
             echo "✅ デプロイ完了"
             echo "🌐 アクセス: http://153.120.128.27"
