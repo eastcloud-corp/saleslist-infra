@@ -32,7 +32,7 @@ COPY --from=builder /root/.local /home/django/.local
 COPY saleslist-backend/ .
 
 # Copy entrypoint script
-COPY docker/backend/docker-entrypoint.sh /docker-entrypoint.sh
+COPY saleslist-infra/docker/backend/docker-entrypoint.sh /docker-entrypoint.sh
 
 # Set environment variables
 ENV PYTHONPATH=/home/django/.local/lib/python3.11/site-packages:$PYTHONPATH
