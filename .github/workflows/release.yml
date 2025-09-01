@@ -1,0 +1,168 @@
+name: Release to Production
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # v1.0.0, v1.2.3 etc. (must be on main branch)
+
+env:
+  REGISTRY_URL: ${{ secrets.SAKURA_REGISTRY_URL }}
+  SAKURA_ACCESS_TOKEN: ${{ secrets.SAKURA_ACCESS_TOKEN }}
+  SAKURA_ACCESS_TOKEN_SECRET: ${{ secrets.SAKURA_ACCESS_TOKEN_SECRET }}
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.get_tag.outputs.tag }}
+      release_notes: ${{ steps.generate_notes.outputs.notes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get tag name
+        id: get_tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: generate_notes
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          # Generate changelog
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD)
+          else
+            NOTES=$(git log --pretty=format:"- %s (%h)" --max-count=10)
+          fi
+          
+          # Create release notes
+          cat > release_notes.md << EOF
+          ## 🚀 Release ${{ steps.get_tag.outputs.tag }}
+          
+          ### Changes
+          $NOTES
+          
+          ### Deployment Information
+          - **Environment**: Production
+          - **Build Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          - **Commit**: ${{ github.sha }}
+          
+          ### Django Admin Access
+          - **URL**: https://saleslist-backend-production.sakura.app/admin/
+          - **Username**: salesnav_admin
+          - **Password**: salesnav20250901
+          
+          ### Application URLs
+          - **Frontend**: https://saleslist-frontend-production.sakura.app
+          - **Backend API**: https://saleslist-backend-production.sakura.app/api/v1/
+          EOF
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          release_name: Release ${{ steps.get_tag.outputs.tag }}
+          body: ${{ steps.generate_notes.outputs.notes }}
+          draft: false
+          prerelease: false
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: create-release
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Sakura Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ secrets.SAKURA_REGISTRY_USERNAME }}
+          password: ${{ secrets.SAKURA_REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./saleslist-infra/docker/${{ matrix.service }}/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.REGISTRY_URL }}/saleslist-${{ matrix.service }}:${{ needs.create-release.outputs.tag_name }}
+            ${{ env.REGISTRY_URL }}/saleslist-${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [create-release, build-and-push]
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Configure Sakura Cloud credentials
+        run: |
+          echo "SAKURACLOUD_ACCESS_TOKEN=${{ env.SAKURA_ACCESS_TOKEN }}" >> $GITHUB_ENV
+          echo "SAKURACLOUD_ACCESS_TOKEN_SECRET=${{ env.SAKURA_ACCESS_TOKEN_SECRET }}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: ./saleslist-infra/terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./saleslist-infra/terraform
+        run: |
+          terraform plan \
+            -var-file="environments/production.tfvars" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="django_secret_key=${{ secrets.DJANGO_SECRET_KEY }}" \
+            -var="image_tag=${{ needs.create-release.outputs.tag_name }}"
+
+      - name: Terraform Apply
+        working-directory: ./saleslist-infra/terraform
+        run: |
+          terraform apply \
+            -var-file="environments/production.tfvars" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="django_secret_key=${{ secrets.DJANGO_SECRET_KEY }}" \
+            -var="image_tag=${{ needs.create-release.outputs.tag_name }}" \
+            -auto-approve
+
+      - name: Run health checks
+        working-directory: ./saleslist-infra/scripts
+        run: |
+          chmod +x health-check.sh
+          ./health-check.sh production
+
+      - name: Update release with deployment info
+        run: |
+          # Get deployment URLs
+          cd saleslist-infra/terraform
+          FRONTEND_URL=$(terraform output -raw frontend_url 2>/dev/null || echo "")
+          BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
+          
+          echo "🎉 Production deployment completed successfully!"
+          echo "📱 Frontend: $FRONTEND_URL"
+          echo "🔗 Backend: $BACKEND_URL"
+          echo "⚙️  Admin: ${BACKEND_URL}/admin/"
