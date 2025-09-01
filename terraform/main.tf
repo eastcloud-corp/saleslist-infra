@@ -50,17 +50,17 @@ resource "sakuracloud_apprun_application" "database" {
     }
 
     env {
-      name  = "POSTGRES_DB"
+      key   = "POSTGRES_DB"
       value = var.db_name
     }
     
     env {
-      name  = "POSTGRES_USER"
+      key   = "POSTGRES_USER"
       value = var.db_user
     }
     
     env {
-      name  = "POSTGRES_PASSWORD"
+      key   = "POSTGRES_PASSWORD"
       value = var.db_password
     }
   }
@@ -90,42 +90,42 @@ resource "sakuracloud_apprun_application" "backend" {
     }
 
     env {
-      name  = "DEBUG"
+      key   = "DEBUG"
       value = "False"
     }
     
     env {
-      name  = "ALLOWED_HOSTS"
+      key   = "ALLOWED_HOSTS"
       value = var.allowed_hosts
     }
     
     env {
-      name  = "DB_HOST"
+      key   = "DB_HOST"
       value = sakuracloud_apprun_application.database.fqdn
     }
     
     env {
-      name  = "DB_NAME"
+      key   = "DB_NAME"
       value = var.db_name
     }
     
     env {
-      name  = "DB_USER"
+      key   = "DB_USER"
       value = var.db_user
     }
     
     env {
-      name  = "DB_PASSWORD"
+      key   = "DB_PASSWORD"
       value = var.db_password
     }
     
     env {
-      name  = "SECRET_KEY"
+      key   = "SECRET_KEY"
       value = var.django_secret_key
     }
     
     env {
-      name  = "CORS_ALLOWED_ORIGINS"
+      key   = "CORS_ALLOWED_ORIGINS"
       value = var.cors_allowed_origins
     }
   }
@@ -156,17 +156,17 @@ resource "sakuracloud_apprun_application" "frontend" {
     }
 
     env {
-      name  = "NODE_ENV"
+      key   = "NODE_ENV"
       value = "production"
     }
     
     env {
-      name  = "NEXT_PUBLIC_API_URL"
+      key   = "NEXT_PUBLIC_API_URL"
       value = "https://${sakuracloud_apprun_application.backend.fqdn}"
     }
     
     env {
-      name  = "PORT"
+      key   = "PORT"
       value = "3000"
     }
   }
