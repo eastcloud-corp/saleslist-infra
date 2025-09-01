@@ -29,7 +29,7 @@ locals {
 # This saves approximately 1,000 yen/month
 
 # Database App Run (PostgreSQL)
-resource "sakuracloud_app_run" "database" {
+resource "sakuracloud_apprun_application" "database" {
   name = "${local.app_name}-db-${local.environment}"
   
   container {
@@ -79,7 +79,7 @@ resource "sakuracloud_app_run" "database" {
     # Allow only backend to access database
     ingress_rule {
       action = "ALLOW"
-      source = sakuracloud_app_run.backend.id
+      source = sakuracloud_apprun_application.backend.id
       port   = "5432"
     }
   }
@@ -88,7 +88,7 @@ resource "sakuracloud_app_run" "database" {
 }
 
 # Backend App Run (Django)
-resource "sakuracloud_app_run" "backend" {
+resource "sakuracloud_apprun_application" "backend" {
   name = "${local.app_name}-backend-${local.environment}"
   
   container {
@@ -107,7 +107,7 @@ resource "sakuracloud_app_run" "backend" {
     
     environment_variable {
       name  = "DB_HOST"
-      value = sakuracloud_app_run.database.fqdn
+      value = sakuracloud_apprun_application.database.fqdn
     }
     
     environment_variable {
@@ -167,7 +167,7 @@ resource "sakuracloud_app_run" "backend" {
     # Allow frontend to access backend
     ingress_rule {
       action = "ALLOW"
-      source = sakuracloud_app_run.frontend.id
+      source = sakuracloud_apprun_application.frontend.id
       port   = "8000"
     }
     
@@ -184,7 +184,7 @@ resource "sakuracloud_app_run" "backend" {
 }
 
 # Frontend App Run (Next.js)
-resource "sakuracloud_app_run" "frontend" {
+resource "sakuracloud_apprun_application" "frontend" {
   name = "${local.app_name}-frontend-${local.environment}"
   
   # Custom domain configuration
@@ -203,7 +203,7 @@ resource "sakuracloud_app_run" "frontend" {
     
     environment_variable {
       name  = "NEXT_PUBLIC_API_URL"
-      value = "https://${sakuracloud_app_run.backend.fqdn}"
+      value = "https://${sakuracloud_apprun_application.backend.fqdn}"
     }
     
     environment_variable {
@@ -252,43 +252,34 @@ resource "sakuracloud_app_run" "frontend" {
 }
 
 # Enhanced Global Access Filter (Firewall)
-resource "sakuracloud_enhanced_global_access_filter" "main" {
+resource "sakuracloud_packet_filter" "main" {
   name        = "${local.app_name}-firewall-${local.environment}"
   description = "Firewall for saleslist application"
   
-  filter {
-    action      = "allow"
+  expression {
     protocol    = "tcp"
     source_port = "80"
+    allow       = true
     description = "Allow HTTP"
   }
   
-  filter {
-    action      = "allow"
+  expression {
     protocol    = "tcp"
     source_port = "443"
+    allow       = true
     description = "Allow HTTPS"
   }
   
-  filter {
-    action      = "allow"
+  expression {
     protocol    = "tcp"
     source_port = "8000"
-    source_network = sakuracloud_app_run.frontend.fqdn
-    description = "Allow frontend to backend"
+    allow       = true
+    description = "Allow backend access"
   }
   
-  filter {
-    action      = "allow"
+  expression {
     protocol    = "tcp"
-    source_port = "5432"
-    source_network = sakuracloud_app_run.backend.fqdn
-    description = "Allow backend to database"
-  }
-  
-  filter {
-    action      = "deny"
-    protocol    = "tcp"
+    allow       = false
     description = "Deny all other TCP"
   }
   
