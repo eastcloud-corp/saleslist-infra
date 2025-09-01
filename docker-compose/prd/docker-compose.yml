@@ -78,8 +78,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:3000"
     volumes:
       - frontend_logs_prd:/var/log/nginx
     depends_on:
