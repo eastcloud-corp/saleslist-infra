@@ -39,7 +39,7 @@ services:
   # Django Backend
   backend:
     build:
-      context: ../../..
+      context: /opt/salesnav
       dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend_prd
     env_file:
