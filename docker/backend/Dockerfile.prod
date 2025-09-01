@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY saleslist-backend/requirements.txt .
+COPY ./saleslist-backend/requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Production stage
@@ -29,10 +29,10 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /root/.local /home/django/.local
 
 # Copy application code
-COPY saleslist-backend/ .
+COPY ./saleslist-backend/ .
 
 # Copy entrypoint script
-COPY saleslist-infra/docker/backend/docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./saleslist-infra/docker/backend/docker-entrypoint.sh /docker-entrypoint.sh
 
 # Set environment variables
 ENV PYTHONPATH=/home/django/.local/lib/python3.11/site-packages:$PYTHONPATH
