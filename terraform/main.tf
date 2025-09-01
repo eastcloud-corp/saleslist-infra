@@ -99,7 +99,7 @@ resource "sakuracloud_apprun_application" "backend" {
     
     env {
       key   = "DB_HOST"
-      value = sakuracloud_apprun_application.database.fqdn
+      value = sakuracloud_apprun_application.database.public_url
     }
     
     env {
@@ -158,7 +158,7 @@ resource "sakuracloud_apprun_application" "frontend" {
     
     env {
       key   = "NEXT_PUBLIC_API_URL"
-      value = "https://${sakuracloud_apprun_application.backend.fqdn}"
+      value = sakuracloud_apprun_application.backend.public_url
     }
     
     env {

@@ -1,17 +1,17 @@
 # Output values for other components to use
 output "frontend_url" {
   description = "Frontend application URL"
-  value       = "https://${sakuracloud_apprun_application.frontend.fqdn}"
+  value       = sakuracloud_apprun_application.frontend.public_url
 }
 
 output "backend_url" {
   description = "Backend API URL"
-  value       = "https://${sakuracloud_apprun_application.backend.fqdn}"
+  value       = sakuracloud_apprun_application.backend.public_url
 }
 
 output "database_host" {
   description = "Database host"
-  value       = sakuracloud_apprun_application.database.fqdn
+  value       = sakuracloud_apprun_application.database.public_url
   sensitive   = true
 }
 
