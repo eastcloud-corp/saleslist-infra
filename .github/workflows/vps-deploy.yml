@@ -34,7 +34,7 @@ jobs:
             DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
             ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
             CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp,http://153.120.128.27,http://localhost:3000
-            NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp/api/v1
+            NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp
             EOF
             
             # Initial setup (only run if needed)
@@ -91,7 +91,9 @@ jobs:
             
             # Setup and start containers
             sudo docker compose down || true
-            sudo docker compose up -d --build
+            sudo docker system prune -f
+            sudo docker compose build --no-cache
+            sudo docker compose up -d
             
             # Wait for services to start
             sleep 60

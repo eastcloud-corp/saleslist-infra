@@ -75,8 +75,6 @@ services:
     container_name: saleslist_frontend_prd
     env_file:
       - ../../env/frontend.prod.env
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     volumes:
