@@ -64,8 +64,6 @@ resource "sakuracloud_apprun_application" "database" {
       value = var.db_password
     }
   }
-  
-  tags = values(local.common_tags)
 }
 
 # Backend App Run (Django)
@@ -129,8 +127,6 @@ resource "sakuracloud_apprun_application" "backend" {
       value = var.cors_allowed_origins
     }
   }
-  
-  tags = values(local.common_tags)
 }
 
 # Frontend App Run (Next.js)
@@ -170,8 +166,6 @@ resource "sakuracloud_apprun_application" "frontend" {
       value = "3000"
     }
   }
-  
-  tags = values(local.common_tags)
 }
 
 # Note: App Run applications have built-in firewall
