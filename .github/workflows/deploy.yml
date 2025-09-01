@@ -76,7 +76,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: docker/${{ matrix.service }}/Dockerfile.prod
+          file: docker/${{ matrix.service }}/Dockerfile.prod
           push: true
           tags: |
             ${{ env.REGISTRY }}/eastcloud-corp/saleslist-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
