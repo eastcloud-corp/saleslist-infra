@@ -1,0 +1,43 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "🚀 セールスナビゲーター自動デプロイ開始"
+            
+            # Update repositories (with sudo)
+            sudo mkdir -p /opt/salesnav
+            cd /opt/salesnav
+            sudo git clone https://github.com/eastcloud-corp/saleslist-backend.git || (cd saleslist-backend && sudo git pull)
+            sudo git clone https://github.com/eastcloud-corp/saleslist-front.git || (cd saleslist-front && sudo git pull)
+            sudo git clone https://github.com/eastcloud-corp/saleslist-infra.git || (cd saleslist-infra && sudo git pull)
+            
+            # Setup and start containers
+            cd /opt/salesnav/saleslist-infra/docker-compose/prd
+            sudo docker compose down || true
+            sudo docker compose up -d
+            
+            # Wait for services to start
+            sleep 30
+            
+            # Health check
+            curl -f http://localhost || echo "Frontend not ready"
+            curl -f http://localhost/api/health/db || echo "Backend not ready"
+            
+            echo "✅ デプロイ完了"
+            echo "🌐 アクセス: http://153.120.128.27"
