@@ -51,14 +51,14 @@ jobs:
       - name: Checkout saleslist-backend
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/saleslist-backend
+          repository: eastcloud-corp/saleslist-backend
           path: saleslist-backend
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout saleslist-front
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/saleslist-front
+          repository: eastcloud-corp/saleslist-front
           path: saleslist-front
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,11 +76,11 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: ./docker/${{ matrix.service }}/Dockerfile.prod
+          dockerfile: docker/${{ matrix.service }}/Dockerfile.prod
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/saleslist-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/saleslist-${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/eastcloud-corp/saleslist-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
+            ${{ env.REGISTRY }}/eastcloud-corp/saleslist-${{ matrix.service }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
