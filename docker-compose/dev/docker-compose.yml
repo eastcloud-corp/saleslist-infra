@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: saleslist_db
+    environment:
+      POSTGRES_DB: saleslist_dev
+      POSTGRES_USER: saleslist_user
+      POSTGRES_PASSWORD: saleslist_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saleslist_user -d saleslist_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: saleslist_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Django Backend
+  backend:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
+    container_name: saleslist_backend
+    env_file:
+      - ../../env/backend.dev.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../../saleslist-backend:/app
+      - backend_static:/app/static
+      - backend_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.prod
+    container_name: saleslist_frontend
+    env_file:
+      - ../../env/frontend.dev.env
+    ports:
+      - "3000:80"
+    volumes:
+      - ../../../saleslist-front:/app
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_static:
+  backend_media:
+
+networks:
+  default:
+    name: saleslist_network

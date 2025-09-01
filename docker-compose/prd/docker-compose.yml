@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: saleslist_db_prd
+    environment:
+      POSTGRES_DB: saleslist_production
+      POSTGRES_USER: saleslist_prod_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=ja_JP.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prd:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saleslist_prod_user -d saleslist_production"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: saleslist_redis_prd
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_prd:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Django Backend
+  backend:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
+    container_name: saleslist_backend_prd
+    env_file:
+      - ../../env/backend.prod.env
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${DJANGO_SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_static_prd:/app/static
+      - backend_media_prd:/app/media
+      - backend_logs_prd:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.prod
+    container_name: saleslist_frontend_prd
+    env_file:
+      - ../../env/frontend.prod.env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - frontend_logs_prd:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prd:
+  redis_data_prd:
+  backend_static_prd:
+  backend_media_prd:
+  backend_logs_prd:
+  frontend_logs_prd:
+
+networks:
+  default:
+    name: saleslist_production_network
