@@ -42,8 +42,6 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend_prd
-    env_file:
-      - ../../env/backend.prod.env
     environment:
       DB_PASSWORD: ${DB_PASSWORD}
       SECRET_KEY: ${DJANGO_SECRET_KEY}
@@ -73,8 +71,6 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/frontend/Dockerfile.prod
     container_name: saleslist_frontend_prd
-    env_file:
-      - ../../env/frontend.prod.env
     ports:
       - "3000:3000"
     volumes:
