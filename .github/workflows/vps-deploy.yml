@@ -27,8 +27,17 @@ jobs:
             sudo git clone https://github.com/eastcloud-corp/saleslist-front.git || (cd saleslist-front && sudo git pull)
             sudo git clone https://github.com/eastcloud-corp/saleslist-infra.git || (cd saleslist-infra && sudo git pull)
             
-            # Setup and start containers
+            # Setup environment variables
             cd /opt/salesnav/saleslist-infra/docker-compose/prd
+            sudo tee .env << EOF
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+            ALLOWED_HOSTS=153.120.128.27,localhost
+            CORS_ALLOWED_ORIGINS=http://153.120.128.27,http://localhost:3000
+            NEXT_PUBLIC_API_URL=http://localhost:8000
+            EOF
+            
+            # Setup and start containers
             sudo docker compose down || true
             sudo docker compose up -d --build
             
