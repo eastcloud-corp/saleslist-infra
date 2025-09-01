@@ -43,10 +43,9 @@ services:
       dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend_prd
     environment:
+      DJANGO_SETTINGS_MODULE: saleslist_backend.settings_production
       DB_PASSWORD: ${DB_PASSWORD}
       SECRET_KEY: ${DJANGO_SECRET_KEY}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
     ports:
       - "8000:8000"
     volumes:
@@ -71,6 +70,10 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/frontend/Dockerfile.prod
     container_name: saleslist_frontend_prd
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://sales-navigator.east-cloud.jp}
     ports:
       - "3000:3000"
     volumes:
