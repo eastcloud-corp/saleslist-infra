@@ -114,11 +114,20 @@ jobs:
               echo "⚡ 既存環境での更新デプロイ"
             fi
             
+            # Pre-deployment backup (if DB exists)
+            if sudo docker compose ps | grep -q "saleslist_db_prd.*healthy"; then
+              echo "🗄️ デプロイ前DBバックアップ実行"
+              sudo bash /opt/salesnav/saleslist-infra/scripts/backup-db.sh
+            fi
+            
             # Setup and start containers
             sudo docker compose down || true
             sudo docker system prune -f
             sudo docker compose build --no-cache
             sudo docker compose up -d
+            
+            # Force restart backend to reload URL changes
+            sudo docker compose restart backend
             
             # Wait for services to start
             sleep 60
