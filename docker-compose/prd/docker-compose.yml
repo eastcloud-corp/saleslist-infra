@@ -59,7 +59,7 @@ services:
     volumes:
       - backend_static_prd:/app/static
       - backend_media_prd:/app/media
-      - /var/log/salesnav/backend:/app/logs
+      - /var/log/salesnav/backend:/app/logs:rw
     depends_on:
       db:
         condition: service_healthy

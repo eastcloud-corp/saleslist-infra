@@ -15,11 +15,18 @@ sudo mkdir -p "${LOG_BASE}/frontend"
 sudo mkdir -p "${LOG_BASE}/backup/database/${CURRENT_MONTH}"
 sudo mkdir -p "${LOG_BASE}/backup/log/${CURRENT_MONTH}"
 
-# 権限設定
+# 権限設定（各サービスのユーザーに合わせる）
 sudo chmod 755 "${LOG_BASE}"
 sudo chmod 755 "${LOG_BASE}/backend"
 sudo chmod 755 "${LOG_BASE}/frontend" 
 sudo chmod 755 "${LOG_BASE}/backup"
+
+# Djangoコンテナユーザー(django:1001)用
+sudo chown -R 1001:1001 "${LOG_BASE}/backend"
+
+# Nginx/root用 
+sudo chown -R root:root "${LOG_BASE}/frontend"
+sudo chown -R root:root "${LOG_BASE}/backup"
 
 echo "✅ ログディレクトリ構造作成完了"
 echo "📂 構造:"
