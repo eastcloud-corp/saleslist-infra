@@ -45,8 +45,8 @@ RUN mkdir -p /app/static /app/media /home/django \
     && chown -R django:django /app /home/django /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
 
-# Switch to non-root user
-USER django
+# Run as root for file permissions
+# USER django
 
 # Expose port
 EXPOSE 8000
