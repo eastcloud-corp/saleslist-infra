@@ -122,25 +122,56 @@ jobs:
             
             # Setup and start containers
             sudo docker compose down || true
-            sudo docker system prune -f
-            sudo docker compose build --no-cache
+            
+            # Complete cache cleanup
+            sudo docker system prune -af --volumes
+            sudo docker builder prune -af
+            
+            # Rebuild with fresh cache and environment variables
+            sudo NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} docker compose build --no-cache --pull
+            
+            # Start services
             sudo docker compose up -d
             
-            # Force restart backend to reload URL changes
+            # Force restart both services to ensure fresh deployment
+            sleep 30
             sudo docker compose restart backend
+            sudo docker compose restart frontend
             
             # Wait for services to start
             sleep 60
             
-            # Health check with error handling
+            # Enhanced health check and validation
+            echo "🔍 デプロイ後検証開始"
+            
+            # Service status check
             if sudo docker compose ps | grep -q "Up"; then
               echo "✅ Services started"
-              sudo docker compose logs --tail=5
+              
+              # Check each service individually
+              echo "🔍 Backend service check:"
+              curl -s -I http://localhost:8000/admin/ | head -1 || echo "Backend not responding"
+              
+              echo "🔍 Frontend service check:" 
+              curl -s -I http://localhost:3000/ | head -1 || echo "Frontend not responding"
+              
+              # Verify environment variables in containers
+              echo "🔍 Frontend environment validation:"
+              sudo docker compose exec -T frontend printenv | grep NEXT_PUBLIC_API_URL || echo "ENV var missing"
+              
+              # Show recent logs for debugging
+              echo "📄 Recent backend logs:"
+              sudo docker compose logs backend --tail=10
+              echo "📄 Recent frontend logs:"
+              sudo docker compose logs frontend --tail=10
+              
+              echo "✅ デプロイ完了"
+              echo "🌐 本番URL: https://sales-navigator.east-cloud.jp" 
+              echo "🌐 IP直接アクセス: http://153.120.128.27"
+              
             else
-              echo "❌ Services failed"
+              echo "❌ Services failed to start"
+              sudo docker compose ps
               sudo docker compose logs
               exit 1
             fi
-            
-            echo "✅ デプロイ完了"
-            echo "🌐 アクセス: http://153.120.128.27"
