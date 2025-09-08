@@ -130,15 +130,27 @@ jobs:
             # Rebuild with fresh cache and environment variables
             sudo NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} docker compose build --no-cache --pull
             
-            # Start services
+            # Start services with detailed logging
+            echo "🚀 Starting services..."
             sudo docker compose up -d
             
-            # Force restart both services to ensure fresh deployment
-            sleep 30
+            # Check initial startup
+            echo "🔍 Initial service status:"
+            sudo docker compose ps
+            
+            # Wait for initial startup
+            sleep 45
+            
+            # Check for build/startup errors
+            echo "🔍 Checking for startup errors:"
+            sudo docker compose logs --tail=20
+            
+            # Force restart both services to ensure fresh deployment  
+            echo "♻️ Restarting services for fresh deployment..."
             sudo docker compose restart backend
             sudo docker compose restart frontend
             
-            # Wait for services to start
+            # Wait for restart completion
             sleep 60
             
             # Enhanced health check and validation
