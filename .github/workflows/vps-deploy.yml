@@ -166,6 +166,19 @@ jobs:
             # Wait for restart completion
             sleep 60
             
+            # Force master data initialization
+            echo "🗄️ Ensuring master data is loaded..."
+            sudo docker compose exec -T backend python manage.py shell -c "
+            from masters.models import *
+            print('Current master data counts:')
+            print(f'ProjectProgressStatus: {ProjectProgressStatus.objects.count()}')
+            print(f'MediaType: {MediaType.objects.count()}')
+            print(f'ServiceType: {ServiceType.objects.count()}')
+            print(f'RegularMeetingStatus: {RegularMeetingStatus.objects.count()}')
+            print(f'ListAvailability: {ListAvailability.objects.count()}')
+            print(f'ListImportSource: {ListImportSource.objects.count()}')
+            " || echo "Master data check failed"
+            
             # Enhanced health check and validation
             echo "🔍 デプロイ後検証開始"
             
