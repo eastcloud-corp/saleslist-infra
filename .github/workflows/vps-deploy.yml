@@ -23,12 +23,15 @@ jobs:
           script: |
             echo "🚀 セールスナビゲーター自動デプロイ開始"
             
-            # Update repositories (with sudo)
+            # Update repositories (with sudo) and force latest
             sudo mkdir -p /opt/salesnav
             cd /opt/salesnav
-            sudo git clone https://github.com/eastcloud-corp/saleslist-backend.git || (cd saleslist-backend && sudo git pull)
-            sudo git clone https://github.com/eastcloud-corp/saleslist-front.git || (cd saleslist-front && sudo git pull)
-            sudo git clone https://github.com/eastcloud-corp/saleslist-infra.git || (cd saleslist-infra && sudo git pull)
+            
+            # Force clean and fresh clone
+            sudo rm -rf saleslist-backend saleslist-front saleslist-infra || true
+            sudo git clone https://github.com/eastcloud-corp/saleslist-backend.git
+            sudo git clone https://github.com/eastcloud-corp/saleslist-front.git  
+            sudo git clone https://github.com/eastcloud-corp/saleslist-infra.git
             
             # Setup environment variables
             cd /opt/salesnav/saleslist-infra/docker-compose/prd
@@ -123,12 +126,22 @@ jobs:
             # Setup and start containers
             sudo docker compose down || true
             
-            # Complete cache cleanup
-            sudo docker system prune -af --volumes
-            sudo docker builder prune -af
+            # Complete cache cleanup - force clean everything
+            echo "🗑️ Force cleaning all Docker cache..."
+            sudo docker compose down --remove-orphans || true
+            sudo docker system prune -af --volumes || true
+            sudo docker builder prune -af || true
+            sudo docker image prune -af || true
             
-            # Rebuild with fresh cache and environment variables
-            sudo NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }} docker compose build --no-cache --pull
+            # Force remove any existing images
+            sudo docker images | grep saleslist | awk '{print $3}' | xargs -r sudo docker rmi -f || true
+            
+            # Build with explicit environment and no cache
+            echo "🔨 Building fresh images..."
+            export NEXT_PUBLIC_API_URL="${{ env.NEXT_PUBLIC_API_URL }}"
+            echo "Environment: NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+            
+            sudo -E docker compose build --no-cache --pull --force-rm
             
             # Start services with detailed logging
             echo "🚀 Starting services..."
