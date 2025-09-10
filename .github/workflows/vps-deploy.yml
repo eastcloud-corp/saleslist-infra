@@ -151,8 +151,16 @@ jobs:
             echo "🔍 Initial service status:"
             sudo docker compose ps
             
-            # Wait for initial startup
-            sleep 45
+            # Active health check instead of blind waiting
+            echo "⏱️ Waiting for services to become ready..."
+            for i in {1..30}; do
+                if curl -s http://localhost:8000/admin/ > /dev/null && curl -s http://localhost:3000/ > /dev/null; then
+                    echo "✅ Services are ready after ${i}0 seconds"
+                    break
+                fi
+                echo "⏳ Attempt $i/30 - Services not ready yet..."
+                sleep 10
+            done
             
             # Check for build/startup errors
             echo "🔍 Checking for startup errors:"
@@ -163,8 +171,16 @@ jobs:
             sudo docker compose restart backend
             sudo docker compose restart frontend
             
-            # Wait for restart completion
-            sleep 60
+            # Active wait for restart completion
+            echo "⏱️ Waiting for restart completion..."
+            for i in {1..18}; do
+                if curl -s http://localhost:8000/admin/ > /dev/null && curl -s http://localhost:3000/ > /dev/null; then
+                    echo "✅ Restart completed after ${i}0 seconds"
+                    break
+                fi
+                echo "⏳ Restart attempt $i/18..."
+                sleep 10
+            done
             
             # Force master data initialization
             echo "🗄️ Ensuring master data is loaded..."
