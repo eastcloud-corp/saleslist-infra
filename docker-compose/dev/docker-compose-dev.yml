@@ -59,26 +59,27 @@ services:
       timeout: 10s
       retries: 3
 
-  # Next.js Frontend
+  # Next.js Frontend (Development with Hot Reload)
   frontend:
     build:
       context: ../../..
-      dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.prod
-    container_name: saleslist_frontend
-    env_file:
-      - ../../env/frontend.dev.env
+      dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.dev
+    container_name: saleslist_frontend_dev
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8002
+      - NEXT_PUBLIC_ENVIRONMENT=dev
+      - NODE_ENV=development
     ports:
-      - "3002:80"
+      - "3002:3000"
     volumes:
+      # Mount source code for hot reload
       - ../../../saleslist-front:/app
+      # Exclude node_modules
+      - /app/node_modules
+      - /app/.next
     depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - backend
+    command: npm run dev
 
 volumes:
   postgres_data:
