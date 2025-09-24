@@ -22,7 +22,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ubuntu
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 1800
+          command_timeout: 30m
           script: |
             echo "🚀 セールスナビゲーター自動デプロイ開始"
             
