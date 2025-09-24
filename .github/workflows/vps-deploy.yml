@@ -10,6 +10,7 @@ on:
 env:
   NEXT_PUBLIC_API_URL: https://sales-navigator.east-cloud.jp
   NEXT_PUBLIC_ENVIRONMENT: prd
+  CLEAN_DOCKER_CACHE: "false"
 
 jobs:
   deploy:
@@ -21,6 +22,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ubuntu
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 1800
           script: |
             echo "🚀 セールスナビゲーター自動デプロイ開始"
             
@@ -129,12 +131,16 @@ jobs:
             # Setup and start containers
             sudo docker compose down || true
             
-            # Complete cache cleanup - force clean everything
-            echo "🗑️ Force cleaning all Docker cache..."
-            sudo docker compose down --remove-orphans || true
-            sudo docker system prune -af --volumes || true
-            sudo docker builder prune -af || true
-            sudo docker image prune -af || true
+            CLEAN_CACHE="${{ env.CLEAN_DOCKER_CACHE }}"
+            if [ "$CLEAN_CACHE" = "true" ]; then
+              echo "🗑️ Force cleaning all Docker cache..."
+              sudo docker compose down --remove-orphans || true
+              sudo docker system prune -af --volumes || true
+              sudo docker builder prune -af || true
+              sudo docker image prune -af || true
+            else
+              echo "🧹 Dockerキャッシュの完全削除はスキップします (CLEAN_DOCKER_CACHE=true で有効化)"
+            fi
             
             # Force remove any existing images
             sudo docker images | grep saleslist | awk '{print $3}' | xargs -r sudo docker rmi -f || true
