@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# セールスナビゲーター データベースバックアップスクリプト
+# ソーシャルナビゲーター データベースバックアップスクリプト
 
 # 変数定義
 SERVICE_NAME="salesnav"
@@ -19,7 +19,7 @@ sudo mkdir -p "${BACKUP_DIR%/database}"/log
 # バックアップファイル名
 BACKUP_FILE="${BACKUP_DIR}/${DATE_DIR}/backup_${TIMESTAMP}.sql"
 
-echo "🗄️  セールスナビゲーター DBバックアップ開始"
+echo "🗄️  ソーシャルナビゲーター DBバックアップ開始"
 echo "📁 保存先: ${BACKUP_FILE}"
 
 # バックアップ実行

@@ -65,6 +65,7 @@ services:
       context: ../../..
       dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.dev
     container_name: saleslist_frontend_dev
+    user: "0"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8002
       - NEXT_PUBLIC_ENVIRONMENT=dev
