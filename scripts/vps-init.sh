@@ -2,7 +2,7 @@
 set -e
 
 # VPS初期化スクリプト
-echo "🚀 Sales Navigator VPS初期化開始"
+echo "🚀 ソーシャルナビゲーター VPS初期化開始"
 
 # System update
 apt update && apt upgrade -y
@@ -72,5 +72,5 @@ ln -s /etc/nginx/sites-available/salesnav /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 systemctl reload nginx
 
-echo "✅ Sales Navigator VPS初期化完了"
+echo "✅ ソーシャルナビゲーター VPS初期化完了"
 echo "🌐 アクセス: http://$(curl -s ifconfig.me)"

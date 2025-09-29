@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# セールスナビゲーター ログディレクトリ構造作成スクリプト
+# ソーシャルナビゲーター ログディレクトリ構造作成スクリプト
 
 SERVICE_NAME="salesnav"
 LOG_BASE="/var/log/${SERVICE_NAME}"

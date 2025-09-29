@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# セールスナビゲーター ログローテーション・アーカイブスクリプト
+# ソーシャルナビゲーター ログローテーション・アーカイブスクリプト
 
 SERVICE_NAME="salesnav"
 LOG_BASE="/var/log/${SERVICE_NAME}"
