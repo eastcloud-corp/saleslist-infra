@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
   workflow_dispatch:
 
 env:
@@ -25,6 +24,7 @@ jobs:
           command_timeout: 30m
           script: |
             echo "🚀 セールスナビゲーター自動デプロイ開始"
+            BRANCH="${{ github.ref_name }}"
             
             # Update repositories (with sudo) and force latest
             sudo mkdir -p /opt/salesnav
@@ -32,9 +32,37 @@ jobs:
             
             # Force clean and fresh clone
             sudo rm -rf saleslist-backend saleslist-front saleslist-infra || true
-            sudo git clone https://github.com/eastcloud-corp/saleslist-backend.git
-            sudo git clone https://github.com/eastcloud-corp/saleslist-front.git  
-            sudo git clone https://github.com/eastcloud-corp/saleslist-infra.git
+            clone_repo() {
+              local repo_url="$1"
+              local dir_name="$2"
+              local target_branch="$3"
+              echo "📥 Cloning ${repo_url} (${target_branch})"
+              if git ls-remote --heads "$repo_url" "$target_branch" | grep -q "$target_branch"; then
+                sudo git clone --depth 1 --branch "$target_branch" --single-branch "$repo_url" "$dir_name"
+              else
+                echo "⚠️  ブランチ ${target_branch} が存在しないためデフォルトブランチを取得します"
+                sudo git clone --depth 1 "$repo_url" "$dir_name"
+              fi
+            }
+
+            clone_repo https://github.com/eastcloud-corp/saleslist-backend.git saleslist-backend "$BRANCH"
+            clone_repo https://github.com/eastcloud-corp/saleslist-front.git saleslist-front "$BRANCH"
+            clone_repo https://github.com/eastcloud-corp/saleslist-infra.git saleslist-infra "$BRANCH"
+
+            # 必要であれば特定のコミットにチェックアウト
+            checkout_commit() {
+              local dir_name="$1"
+              local commit_sha="$2"
+              if [ -n "$commit_sha" ]; then
+                cd "$dir_name"
+                if sudo git rev-parse --quiet --verify "$commit_sha^{commit}" > /dev/null; then
+                  sudo git checkout "$commit_sha"
+                fi
+                cd - >/dev/null 2>&1
+              fi
+            }
+
+            checkout_commit saleslist-infra "${{ github.sha }}"
             
             # Setup environment variables
             cd /opt/salesnav/saleslist-infra/docker-compose/prd
