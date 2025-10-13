@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: saleslist_password
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
-      - "5433:5432"
+      - "5442:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -43,7 +43,7 @@ services:
     env_file:
       - ../../env/backend.dev.env
     ports:
-      - "8002:8000"
+      - "8010:8000"
     volumes:
       - ../../../saleslist-backend:/app
       - backend_static:/app/static
@@ -59,6 +59,44 @@ services:
       timeout: 10s
       retries: 3
 
+  # Celery Worker
+  worker:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
+    container_name: saleslist_worker
+    env_file:
+      - ../../env/backend.dev.env
+    command: celery -A saleslist_backend worker -l info
+    volumes:
+      - ../../../saleslist-backend:/app
+      - backend_static:/app/static
+      - backend_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Celery Beat
+  beat:
+    build:
+      context: ../../..
+      dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
+    container_name: saleslist_beat
+    env_file:
+      - ../../env/backend.dev.env
+    command: celery -A saleslist_backend beat -l info
+    volumes:
+      - ../../../saleslist-backend:/app
+      - backend_static:/app/static
+      - backend_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   # Next.js Frontend
   frontend:
     build:
@@ -68,7 +106,7 @@ services:
     env_file:
       - ../../env/frontend.dev.env
     ports:
-      - "${FRONTEND_PORT:-3009}:3000"
+      - "${FRONTEND_PORT:-3010}:3000"
     depends_on:
       backend:
         condition: service_healthy
