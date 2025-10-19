@@ -5,9 +5,9 @@ services:
     build: ../saleslist-backend/database
     container_name: saleslist-database
     environment:
-      POSTGRES_DB: saleslist
-      POSTGRES_USER: saleslist_user
-      POSTGRES_PASSWORD: saleslist_password
+      POSTGRES_DB: social_navigator
+      POSTGRES_USER: social_navigator_user
+      POSTGRES_PASSWORD: social_navigator_password
     ports:
       - "5434:5432"
     volumes:
@@ -26,12 +26,12 @@ services:
       dockerfile: Dockerfile
     container_name: saleslist-backend
     environment:
-      - DATABASE_URL=postgresql://saleslist_user:saleslist_password@database:5432/saleslist
+      - DATABASE_URL=postgresql://social_navigator_user:social_navigator_password@database:5432/social_navigator
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=saleslist
-      - DB_USER=saleslist_user
-      - DB_PASSWORD=saleslist_password
+      - DB_NAME=social_navigator
+      - DB_USER=social_navigator_user
+      - DB_PASSWORD=social_navigator_password
       - DEBUG=True
       - SECRET_KEY=django-local-development-key-not-for-production
     ports:
