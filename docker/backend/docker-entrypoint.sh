@@ -34,6 +34,11 @@ else:
 echo "Loading master data using management command..."
 python manage.py load_master_data
 
+if [[ "${ENABLE_SAMPLE_DATA:-False}" == "True" ]]; then
+    echo "Seeding sample data (ENABLE_SAMPLE_DATA=True)..."
+    python seed_data.py || echo "⚠️ Sample data seeding encountered an issue (continuing)"
+fi
+
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput

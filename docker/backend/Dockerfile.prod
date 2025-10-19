@@ -37,7 +37,7 @@ COPY saleslist-infra/docker/backend/docker-entrypoint.sh /docker-entrypoint.sh
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=saleslist_backend.settings
+ENV DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
 
 # Create static and media directories and set permissions
 RUN mkdir -p /app/static /app/media /home/django \

@@ -9,7 +9,7 @@ on:
 env:
   NEXT_PUBLIC_API_URL: https://sales-navigator.east-cloud.jp
   NEXT_PUBLIC_ENVIRONMENT: prd
-  CLEAN_DOCKER_CACHE: "false"
+  CLEAN_DOCKER_CACHE: "true"
 
 jobs:
   deploy:
@@ -67,18 +67,20 @@ jobs:
             # Setup environment variables
             cd /opt/salesnav/saleslist-infra/docker-compose/prd
             sudo tee .env << EOF
-            DB_HOST="db"
-            DB_PORT="5432"
-            DB_NAME="saleslist_production"
-            DB_USER="saleslist_prod_user"
-            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"
-            DEBUG="False"
-            ALLOWED_HOSTS="sales-navigator.east-cloud.jp,153.120.128.27,localhost"
-            CORS_ALLOWED_ORIGINS="https://sales-navigator.east-cloud.jp"
-            NEXT_PUBLIC_API_URL="${{ env.NEXT_PUBLIC_API_URL }}"
-            NEXT_PUBLIC_ENVIRONMENT="${{ env.NEXT_PUBLIC_ENVIRONMENT }}"
-            REDIS_URL="redis://redis:6379/1"
+            DB_HOST=db
+            DB_PORT=5432
+            DB_NAME=saleslist_production
+            DB_USER=saleslist_prod_user
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
+            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+            DJANGO_DEBUG=False
+            DJANGO_ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
+            CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp
+            CORS_ALLOW_ALL_ORIGINS=False
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_ENVIRONMENT=${{ env.NEXT_PUBLIC_ENVIRONMENT }}
+            REDIS_URL=redis://redis:6379/1
             EOF
             
             # Debug: 環境変数確認
@@ -161,9 +163,9 @@ jobs:
             
             CLEAN_CACHE="${{ env.CLEAN_DOCKER_CACHE }}"
             if [ "$CLEAN_CACHE" = "true" ]; then
-              echo "🗑️ Force cleaning all Docker cache..."
+              echo "🗑️ Force cleaning Docker cache (volumes are preserved)..."
               sudo docker compose down --remove-orphans || true
-              sudo docker system prune -af --volumes || true
+              sudo docker system prune -af || true
               sudo docker builder prune -af || true
               sudo docker image prune -af || true
             else
