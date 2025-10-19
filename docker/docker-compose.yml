@@ -25,15 +25,8 @@ services:
       context: ../saleslist-backend
       dockerfile: Dockerfile
     container_name: saleslist-backend
-    environment:
-      - DATABASE_URL=postgresql://social_navigator_user:social_navigator_password@database:5432/social_navigator
-      - DB_HOST=database
-      - DB_PORT=5432
-      - DB_NAME=social_navigator
-      - DB_USER=social_navigator_user
-      - DB_PASSWORD=social_navigator_password
-      - DEBUG=True
-      - SECRET_KEY=django-local-development-key-not-for-production
+    env_file:
+      - ../env/prod/backend.env
     ports:
       - "8002:8000"
     depends_on:
@@ -55,9 +48,8 @@ services:
       context: ../saleslist-front
       dockerfile: Dockerfile.simple
     container_name: saleslist-frontend
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8002/api/v1
-      - NODE_ENV=production
+    env_file:
+      - ../env/prod/frontend.env
     ports:
       - "3002:3000"
     volumes:
