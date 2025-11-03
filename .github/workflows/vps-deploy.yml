@@ -47,6 +47,12 @@ jobs:
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
+      - name: Add VPS host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
       - name: Deploy to VPS
         run: |
           rsync -az --delete bundle/ ${VPS_USER}@${VPS_HOST}:${PROJECT_ROOT}/
