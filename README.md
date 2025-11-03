@@ -8,6 +8,39 @@
 Internet → [Firewall] → [Frontend App Run] → [Backend App Run] → [Database App Run]
 ```
 
+## ローカル開発環境の起動
+
+### 前提条件
+- Docker / Docker Compose Plugin v2 以降がインストール済み
+- 本リポジトリ（`budget` ルート）をチェックアウト済み
+
+### 初期セットアップ
+1. 必要に応じて `env/dev/backend.env` と `env/dev/frontend.env` の値を確認・調整します（デフォルト値のままで開発起動可能）。
+2. 初回起動時や依存ライブラリを変更した場合は下記でイメージをビルドします。
+
+```bash
+docker compose -f saleslist-infra/docker-compose/dev/docker-compose.yml build
+```
+
+### 起動
+バックエンド／フロントエンド／ジョブワーカーを含む開発スタックをまとめて起動します。
+
+```bash
+docker compose -f saleslist-infra/docker-compose/dev/docker-compose.yml up -d db redis backend worker beat frontend
+```
+
+- フロントエンドは `http://localhost:3010`（`FRONTEND_PORT` で上書き可）で待ち受けます。
+- バックエンド API は `http://localhost:8010` でアクセスできます。
+- PostgreSQL はホスト側 `localhost:5442` にバインドされ、Django テストもこのポートに接続します。
+- Redis は `localhost:6380` で待ち受けます。
+- 公開ポート一覧は `saleslist-docs/dev-port-config.md` を参照してください。
+
+### ログ確認と停止
+- ログ: `docker compose -f saleslist-infra/docker-compose/dev/docker-compose.yml logs -f backend`
+- 停止: `docker compose -f saleslist-infra/docker-compose/dev/docker-compose.yml stop`
+- 完全にコンテナを削除する場合は `down` を利用してください。
+
+
 ## 必要なさくらのクラウド設定情報
 
 ### 1. アカウント・認証情報
