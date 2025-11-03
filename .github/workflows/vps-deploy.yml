@@ -53,10 +53,6 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Prepare remote shell
-        run: |
-          ssh ${VPS_USER}@${VPS_HOST} "touch ~/.hushlogin"
-
       - name: Deploy to VPS
         run: |
           rsync -az --delete \
@@ -67,10 +63,10 @@ jobs:
           ssh ${VPS_USER}@${VPS_HOST} <<EOS
           set -e
           cd ${PROJECT_ROOT}
-          docker compose -f ${COMPOSE_FILE} pull backend frontend
-          docker compose -f ${COMPOSE_FILE} build backend frontend worker beat
-          docker compose -f ${COMPOSE_FILE} up -d db redis
-          docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
-          docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
-          docker image prune -f
+          sudo docker compose -f ${COMPOSE_FILE} pull backend frontend
+          sudo docker compose -f ${COMPOSE_FILE} build backend frontend worker beat
+          sudo docker compose -f ${COMPOSE_FILE} up -d db redis
+          sudo docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
+          sudo docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
+          sudo docker image prune -f
           EOS
