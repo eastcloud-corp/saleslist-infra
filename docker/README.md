@@ -25,13 +25,15 @@ env/
 
 ```bash
 cd saleslist-infra/docker/dev
-docker compose up -d
+docker compose up -d db redis backend worker beat frontend
 ```
 
 - 環境変数は `env/dev/backend.env` / `env/dev/frontend.env` にまとまっています。必要に応じて API URL や `DJANGO_DEBUG` などを書き換えてください。
 - 起動するサービス
   - PostgreSQL (`localhost:5434`)
+  - Redis (`localhost:6380`)
   - Django Backend (`localhost:8002`)
+  - Celery Worker / Beat
   - Next.js Frontend (`localhost:3002`)
 - ホットリロード対応。バックエンド／フロントエンドのソースを直接マウントしています。
 
