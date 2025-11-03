@@ -29,6 +29,12 @@ jobs:
           repository: eastcloud-corp/saleslist-backend
           path: backend
 
+      - name: Checkout docs repo
+        uses: actions/checkout@v4
+        with:
+          repository: eastcloud-corp/saleslist-docs
+          path: docs
+
       - name: Checkout frontend repo
         uses: actions/checkout@v4
         with:
@@ -41,7 +47,7 @@ jobs:
           rsync -a backend/ bundle/saleslist-backend/
           rsync -a front/ bundle/saleslist-front/
           rsync -a infra/ bundle/saleslist-infra/
-          rsync -a backend/saleslist-docs/ bundle/saleslist-docs/
+          rsync -a docs/ bundle/saleslist-docs/
 
       - name: Generate production env file
         run: |
