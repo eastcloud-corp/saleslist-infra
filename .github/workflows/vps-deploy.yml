@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy to Sakura VPS
 
 on:
   push:
@@ -7,267 +7,57 @@ on:
   workflow_dispatch:
 
 env:
-  NEXT_PUBLIC_API_URL: https://sales-navigator.east-cloud.jp
-  NEXT_PUBLIC_ENVIRONMENT: prd
-  CLEAN_DOCKER_CACHE: "true"
+  VPS_HOST: ${{ secrets.VPS_HOST }}
+  VPS_USER: ${{ secrets.VPS_USER }}
+  SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+  PROJECT_ROOT: /opt/salesnav
+  COMPOSE_FILE: saleslist-infra/docker-compose/prd/docker-compose.yml
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ubuntu
-          key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 30m
-          script: |
-            echo "🚀 セールスナビゲーター自動デプロイ開始"
-            BRANCH="${{ github.ref_name }}"
-            
-            # Update repositories (with sudo) and force latest
-            sudo mkdir -p /opt/salesnav
-            cd /opt/salesnav
-            
-            # Force clean and fresh clone
-            sudo rm -rf saleslist-backend saleslist-front saleslist-infra || true
-            clone_repo() {
-              local repo_url="$1"
-              local dir_name="$2"
-              local target_branch="$3"
-              echo "📥 Cloning ${repo_url} (${target_branch})"
-              if git ls-remote --heads "$repo_url" "$target_branch" | grep -q "$target_branch"; then
-                sudo git clone --depth 1 --branch "$target_branch" --single-branch "$repo_url" "$dir_name"
-              else
-                echo "⚠️  ブランチ ${target_branch} が存在しないためデフォルトブランチを取得します"
-                sudo git clone --depth 1 "$repo_url" "$dir_name"
-              fi
-            }
+          path: infra
 
-            clone_repo https://github.com/eastcloud-corp/saleslist-backend.git saleslist-backend "$BRANCH"
-            clone_repo https://github.com/eastcloud-corp/saleslist-front.git saleslist-front "$BRANCH"
-            clone_repo https://github.com/eastcloud-corp/saleslist-infra.git saleslist-infra "$BRANCH"
+      - name: Checkout backend repo
+        uses: actions/checkout@v4
+        with:
+          repository: eastcloud-corp/saleslist-backend
+          path: backend
 
-            # 必要であれば特定のコミットにチェックアウト
-            checkout_commit() {
-              local dir_name="$1"
-              local commit_sha="$2"
-              if [ -n "$commit_sha" ]; then
-                cd "$dir_name"
-                if sudo git rev-parse --quiet --verify "$commit_sha^{commit}" > /dev/null; then
-                  sudo git checkout "$commit_sha"
-                fi
-                cd - >/dev/null 2>&1
-              fi
-            }
+      - name: Checkout frontend repo
+        uses: actions/checkout@v4
+        with:
+          repository: eastcloud-corp/saleslist-front
+          path: front
 
-            checkout_commit saleslist-infra "${{ github.sha }}"
-            
-            # Setup environment variables
-            cd /opt/salesnav/saleslist-infra/docker-compose/prd
-            sudo tee .env << EOF
-            DB_HOST=db
-            DB_PORT=5432
-            DB_NAME=saleslist_production
-            DB_USER=saleslist_prod_user
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
-            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-            DJANGO_DEBUG=False
-            DJANGO_ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
-            CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp
-            CORS_ALLOW_ALL_ORIGINS=False
-            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_ENVIRONMENT=${{ env.NEXT_PUBLIC_ENVIRONMENT }}
-            REDIS_URL=redis://redis:6379/1
-            EOF
-            
-            # Debug: 環境変数確認
-            echo "🔍 GitHub Actions環境変数:"
-            echo "NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}"
-            echo "🔍 .envファイル内容:"
-            grep NEXT_PUBLIC_API_URL .env
-            echo "🔍 Docker build時の環境変数:"
-            echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"
-            echo "NEXT_PUBLIC_ENVIRONMENT=${NEXT_PUBLIC_ENVIRONMENT}"
-            
-            # Initial setup (only run if needed)
-            if [ ! -f "/etc/nginx/sites-enabled/default" ]; then
-              echo "🔧 初回セットアップ実行"
-              
-              # Install Nginx and Certbot
-              sudo apt install -y nginx certbot python3-certbot-nginx
-              
-              # Setup Nginx configuration
-              sudo tee /etc/nginx/sites-enabled/default << 'NGINX_EOF'
-            server {
-                listen 80;
-                listen 443 ssl;
-                server_name sales-navigator.east-cloud.jp;
-                
-                ssl_certificate /etc/letsencrypt/live/sales-navigator.east-cloud.jp/fullchain.pem;
-                ssl_certificate_key /etc/letsencrypt/live/sales-navigator.east-cloud.jp/privkey.pem;
-                
-                location / {
-                    proxy_pass http://localhost:3000;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-                
-                location /api/ {
-                    proxy_pass http://localhost:8000/api/;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-                
-                location /admin/ {
-                    proxy_pass http://localhost:8000/admin/;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-                
-                location /static/ {
-                    proxy_pass http://localhost:8000/static/;
-                }
-                
-                location /media/ {
-                    proxy_pass http://localhost:8000/media/;
-                }
-            }
-            NGINX_EOF
-              
-              # Get SSL certificate
-              sudo systemctl start nginx
-              sudo certbot --nginx -d sales-navigator.east-cloud.jp --non-interactive --agree-tos --email admin@budget-sales.com || true
-              
-              # Setup log structure
-              sudo bash /opt/salesnav/saleslist-infra/scripts/setup-log-structure.sh
-              
-              # Setup cron jobs
-              sudo bash /opt/salesnav/saleslist-infra/scripts/setup-ssl-cron.sh
-              
-              echo "✅ 初回セットアップ完了"
-            else
-              echo "⚡ 既存環境での更新デプロイ"
-            fi
-            
-            # Pre-deployment backup (if DB exists)
-            if sudo docker compose ps | grep -q "saleslist_db_prd.*healthy"; then
-              echo "🗄️ デプロイ前DBバックアップ実行"
-              sudo bash /opt/salesnav/saleslist-infra/scripts/backup-db.sh
-            fi
-            
-            # Setup and start containers
-            sudo docker compose down || true
-            
-            CLEAN_CACHE="${{ env.CLEAN_DOCKER_CACHE }}"
-            if [ "$CLEAN_CACHE" = "true" ]; then
-              echo "🗑️ Force cleaning Docker cache (volumes are preserved)..."
-              sudo docker compose down --remove-orphans || true
-              sudo docker system prune -af || true
-              sudo docker builder prune -af || true
-              sudo docker image prune -af || true
-            else
-              echo "🧹 Dockerキャッシュの完全削除はスキップします (CLEAN_DOCKER_CACHE=true で有効化)"
-            fi
-            
-            # Force remove any existing images
-            sudo docker images | grep saleslist | awk '{print $3}' | xargs -r sudo docker rmi -f || true
-            
-            # Build with explicit environment and no cache
-            echo "🔨 Building fresh images..."
-            export NEXT_PUBLIC_API_URL="${{ env.NEXT_PUBLIC_API_URL }}"
-            export NEXT_PUBLIC_ENVIRONMENT="${{ env.NEXT_PUBLIC_ENVIRONMENT }}"
-            echo "Environment: NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
-            echo "Environment: NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT"
-            
-            sudo -E docker compose build --no-cache --pull --force-rm
-            
-            # Start services with detailed logging
-            echo "🚀 Starting services..."
-            sudo docker compose up -d
-            
-            # Check initial startup
-            echo "🔍 Initial service status:"
-            sudo docker compose ps
-            
-            # Active health check instead of blind waiting
-            echo "⏱️ Waiting for services to become ready..."
-            for i in {1..30}; do
-                if curl -s http://localhost:8000/admin/ > /dev/null && curl -s http://localhost:3000/ > /dev/null; then
-                    echo "✅ Services are ready after ${i}0 seconds"
-                    break
-                fi
-                echo "⏳ Attempt $i/30 - Services not ready yet..."
-                sleep 10
-            done
-            
-            # Check for build/startup errors
-            echo "🔍 Checking for startup errors:"
-            sudo docker compose logs --tail=20
-            
-            # Force restart both services to ensure fresh deployment  
-            echo "♻️ Restarting services for fresh deployment..."
-            sudo docker compose restart backend
-            sudo docker compose restart frontend
-            
-            # Active wait for restart completion
-            echo "⏱️ Waiting for restart completion..."
-            for i in {1..18}; do
-                if curl -s http://localhost:8000/admin/ > /dev/null && curl -s http://localhost:3000/ > /dev/null; then
-                    echo "✅ Restart completed after ${i}0 seconds"
-                    break
-                fi
-                echo "⏳ Restart attempt $i/18..."
-                sleep 10
-            done
-            
-            # Force master data initialization
-            echo "🗄️ Ensuring master data is loaded..."
-            sudo docker compose exec -T backend python manage.py shell -c "
-            from masters.models import *
-            print('Current master data counts:')
-            print(f'ProjectProgressStatus: {ProjectProgressStatus.objects.count()}')
-            print(f'MediaType: {MediaType.objects.count()}')
-            print(f'ServiceType: {ServiceType.objects.count()}')
-            print(f'RegularMeetingStatus: {RegularMeetingStatus.objects.count()}')
-            print(f'ListAvailability: {ListAvailability.objects.count()}')
-            print(f'ListImportSource: {ListImportSource.objects.count()}')
-            " || echo "Master data check failed"
-            
-            # Enhanced health check and validation
-            echo "🔍 デプロイ後検証開始"
-            
-            # Service status check
-            if sudo docker compose ps | grep -q "Up"; then
-              echo "✅ Services started"
-              
-              # Check each service individually
-              echo "🔍 Backend service check:"
-              curl -s -I http://localhost:8000/admin/ | head -1 || echo "Backend not responding"
-              
-              echo "🔍 Frontend service check:" 
-              curl -s -I http://localhost:3000/ | head -1 || echo "Frontend not responding"
-              
-              # Verify environment variables in containers
-              echo "🔍 Frontend environment validation:"
-              sudo docker compose exec -T frontend printenv | grep NEXT_PUBLIC_API_URL || echo "NEXT_PUBLIC_API_URL missing"
-              sudo docker compose exec -T frontend printenv | grep NEXT_PUBLIC_ENVIRONMENT || echo "NEXT_PUBLIC_ENVIRONMENT missing"
-              
-              # Show recent logs for debugging
-              echo "📄 Recent backend logs:"
-              sudo docker compose logs backend --tail=10
-              echo "📄 Recent frontend logs:"
-              sudo docker compose logs frontend --tail=10
-              
-              echo "✅ デプロイ完了"
-              echo "🌐 本番URL: https://sales-navigator.east-cloud.jp" 
-              echo "🌐 IP直接アクセス: http://153.120.128.27"
-              
-            else
-              echo "❌ Services failed to start"
-              sudo docker compose ps
-              sudo docker compose logs
-              exit 1
-            fi
+      - name: Prepare files for deployment
+        run: |
+          mkdir -p bundle
+          rsync -a backend/ bundle/saleslist-backend/
+          rsync -a front/ bundle/saleslist-front/
+          rsync -a infra/ bundle/saleslist-infra/
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to VPS
+        run: |
+          rsync -az --delete bundle/ ${VPS_USER}@${VPS_HOST}:${PROJECT_ROOT}/
+
+          ssh ${VPS_USER}@${VPS_HOST} <<'EOS'
+          set -e
+          cd ${PROJECT_ROOT}
+          docker compose -f ${COMPOSE_FILE} pull backend frontend
+          docker compose -f ${COMPOSE_FILE} build backend frontend worker beat
+          docker compose -f ${COMPOSE_FILE} up -d db redis
+          docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
+          docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
+          docker image prune -f
+          EOS

@@ -41,7 +41,7 @@ services:
       dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend
     env_file:
-      - ../../env/backend.dev.env
+      - ../../env/dev/backend.env
     ports:
       - "8010:8000"
     volumes:
@@ -66,7 +66,7 @@ services:
       dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_worker
     env_file:
-      - ../../env/backend.dev.env
+      - ../../env/dev/backend.env
     command: celery -A saleslist_backend worker -l info
     volumes:
       - ../../../saleslist-backend:/app
@@ -85,7 +85,7 @@ services:
       dockerfile: ./saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_beat
     env_file:
-      - ../../env/backend.dev.env
+      - ../../env/dev/backend.env
     command: celery -A saleslist_backend beat -l info
     volumes:
       - ../../../saleslist-backend:/app
@@ -104,7 +104,7 @@ services:
       dockerfile: ./saleslist-infra/docker/frontend/Dockerfile.prod
     container_name: saleslist_frontend
     env_file:
-      - ../../env/frontend.dev.env
+      - ../../env/dev/frontend.env
     ports:
       - "${FRONTEND_PORT:-3010}:3000"
     depends_on:
