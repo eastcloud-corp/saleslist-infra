@@ -40,6 +40,8 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_backend_prd
+    env_file:
+      - .env
     environment:
       DJANGO_SETTINGS_MODULE: saleslist_backend.settings.prod
       DB_HOST: ${DB_HOST}
@@ -77,6 +79,8 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_worker_prd
+    env_file:
+      - .env
     environment:
       DJANGO_SETTINGS_MODULE: saleslist_backend.settings.prod
       DB_HOST: ${DB_HOST}
@@ -106,6 +110,8 @@ services:
       context: /opt/salesnav
       dockerfile: saleslist-infra/docker/backend/Dockerfile.prod
     container_name: saleslist_beat_prd
+    env_file:
+      - .env
     environment:
       DJANGO_SETTINGS_MODULE: saleslist_backend.settings.prod
       DB_HOST: ${DB_HOST}
@@ -137,6 +143,8 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_ENVIRONMENT: ${NEXT_PUBLIC_ENVIRONMENT}
     container_name: saleslist_frontend_prd
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3000
