@@ -21,6 +21,7 @@ RUN npm install --legacy-peer-deps
 COPY saleslist-front/ .
 # Copy shared documentation assets
 COPY saleslist-docs ./saleslist-docs
+RUN cp saleslist-docs/user-guide-general.md ./user-guide.md
 
 # Build the application
 RUN npm run build
@@ -47,6 +48,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/saleslist-docs ./saleslist-docs
+COPY --from=builder /app/user-guide.md ./user-guide.md
 
 # Create non-root user
 RUN groupadd --gid 1001 nodejs \
