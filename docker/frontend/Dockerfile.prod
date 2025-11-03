@@ -19,8 +19,8 @@ RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY saleslist-front/ .
-# Copy shared documentation assets
-COPY saleslist-docs/user-guide.md ./user-guide.md
+# Copy shared documentation assets bundled with infra repo
+COPY saleslist-infra/docs/user-guide-general.md ./user-guide.md
 
 # Build the application
 RUN npm run build
