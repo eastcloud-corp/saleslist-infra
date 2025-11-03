@@ -91,7 +91,7 @@ jobs:
           set -e
           cd ${PROJECT_ROOT}
           sudo docker compose -f ${COMPOSE_FILE} pull backend frontend
-          sudo docker compose -f ${COMPOSE_FILE} build backend frontend worker beat
+          sudo docker compose -f ${COMPOSE_FILE} build --no-cache backend frontend worker beat
           sudo docker compose -f ${COMPOSE_FILE} up -d db redis
           sudo docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
           sudo docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
