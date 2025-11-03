@@ -57,7 +57,7 @@ jobs:
         run: |
           rsync -az --delete bundle/ ${VPS_USER}@${VPS_HOST}:${PROJECT_ROOT}/
 
-          ssh ${VPS_USER}@${VPS_HOST} <<'EOS'
+          ssh ${VPS_USER}@${VPS_HOST} <<EOS
           set -e
           cd ${PROJECT_ROOT}
           docker compose -f ${COMPOSE_FILE} pull backend frontend
