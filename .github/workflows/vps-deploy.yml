@@ -67,6 +67,9 @@ jobs:
           REDIS_URL=redis://redis:6379/1
           CELERY_BROKER_URL=redis://redis:6379/1
           CELERY_RESULT_BACKEND=redis://redis:6379/1
+          CSRF_TRUSTED_ORIGINS=https://sales-navigator.east-cloud.jp
+          CSRF_COOKIE_SECURE=True
+          SESSION_COOKIE_SECURE=True
           POWERPLEXY_API_KEY=${{ secrets.POWERPLEXY_API_KEY }}
           POWERPLEXY_MONTHLY_COST_LIMIT=150
           POWERPLEXY_COST_PER_REQUEST=0.05
