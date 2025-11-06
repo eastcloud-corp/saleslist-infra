@@ -1,12 +1,14 @@
 # Saleslist Infrastructure
 
-さくらのクラウド App Run を使用した営業リスト管理システムのインフラ構成
+さくらのクラウド VPS + Docker Compose を使用した営業リスト管理システムのインフラ構成
 
 ## アーキテクチャ
 
 ```
 Internet → [Firewall] → [Frontend App Run] → [Backend App Run] → [Database App Run]
 ```
+
+詳細な構成・運用メモは `docs/architecture.md` を参照してください。
 
 ## ローカル開発環境の起動
 
