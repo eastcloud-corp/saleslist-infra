@@ -111,6 +111,8 @@ git push origin develop
 git push origin main
 ```
 
+> **Note**: 本番デプロイは `deploy-*` タグでも実行できます（GitHub Releases からタグを発行）。詳しくは `saleslist-docs/operations/release-tag-guide.md` を参照してください。
+
 ### 手動デプロイ
 ```bash
 # Staging環境
