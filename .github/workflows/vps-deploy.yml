@@ -52,10 +52,20 @@ jobs:
 
       - name: Generate production env file
         run: |
-          cat <<'EOF' > bundle/saleslist-infra/docker-compose/prd/.env
+          escape_dollar() {
+            printf '%s' "$1" | sed 's/\$/$$/g'
+          }
+
+          DJANGO_SECRET_KEY_ESCAPED=$(escape_dollar "${{ secrets.DJANGO_SECRET_KEY }}")
+          DB_PASSWORD_ESCAPED=$(escape_dollar "${{ secrets.DB_PASSWORD }}")
+          POWERPLEXY_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.POWERPLEXY_API_KEY }}")
+          MFA_EMAIL_FROM_ESCAPED=$(escape_dollar "${{ secrets.MFA_EMAIL_FROM }}")
+          SENDGRID_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.SENDGRID_API_KEY }}")
+
+          cat <<EOF > bundle/saleslist-infra/docker-compose/prd/.env
           DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
           DJANGO_DEBUG=False
-          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY_ESCAPED
           DJANGO_ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
           CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp
           CORS_ALLOW_ALL_ORIGINS=False
@@ -63,19 +73,19 @@ jobs:
           DB_PORT=5432
           DB_NAME=saleslist_production
           DB_USER=saleslist_prod_user
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD=$DB_PASSWORD_ESCAPED
           REDIS_URL=redis://redis:6379/1
           CELERY_BROKER_URL=redis://redis:6379/1
           CELERY_RESULT_BACKEND=redis://redis:6379/1
           CSRF_TRUSTED_ORIGINS=https://sales-navigator.east-cloud.jp
           CSRF_COOKIE_SECURE=True
           SESSION_COOKIE_SECURE=True
-          POWERPLEXY_API_KEY=${{ secrets.POWERPLEXY_API_KEY }}
+          POWERPLEXY_API_KEY=$POWERPLEXY_API_KEY_ESCAPED
           POWERPLEXY_MONTHLY_COST_LIMIT=150
           POWERPLEXY_COST_PER_REQUEST=0.05
           POWERPLEXY_MODEL=sonar-medium
-          MFA_EMAIL_FROM=${{ secrets.MFA_EMAIL_FROM }}
-          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+          MFA_EMAIL_FROM=$MFA_EMAIL_FROM_ESCAPED
+          SENDGRID_API_KEY=$SENDGRID_API_KEY_ESCAPED
           NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp
           NEXT_PUBLIC_ENVIRONMENT=prd
           EOF
