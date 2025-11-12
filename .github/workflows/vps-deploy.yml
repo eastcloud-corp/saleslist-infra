@@ -104,7 +104,7 @@ jobs:
           sudo docker compose -f ${COMPOSE_FILE} build --no-cache backend frontend worker beat
           sudo docker compose -f ${COMPOSE_FILE} up -d db redis
           sudo docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
-          sudo docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
+          sudo docker compose -f ${COMPOSE_FILE} up -d --build --force-recreate backend worker beat frontend
           sudo docker builder prune -af
           sudo docker image prune -f
           EOS
