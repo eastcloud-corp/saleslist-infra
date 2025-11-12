@@ -10,6 +10,7 @@ services:
       POSTGRES_USER: saleslist_user
       POSTGRES_PASSWORD: saleslist_password
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+      TZ: Asia/Tokyo
     ports:
       - "5442:5432"
     volumes:
@@ -24,6 +25,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: saleslist_redis
+    environment:
+      TZ: Asia/Tokyo
     ports:
       - "6380:6379"
     volumes:
@@ -42,6 +45,8 @@ services:
     container_name: saleslist_backend
     env_file:
       - ../../env/dev/backend.env
+    environment:
+      TZ: Asia/Tokyo
     ports:
       - "8010:8000"
     volumes:
@@ -67,6 +72,8 @@ services:
     container_name: saleslist_worker
     env_file:
       - ../../env/dev/backend.env
+    environment:
+      TZ: Asia/Tokyo
     command: celery -A saleslist_backend worker -l info
     volumes:
       - ../../../saleslist-backend:/app
@@ -86,6 +93,8 @@ services:
     container_name: saleslist_beat
     env_file:
       - ../../env/dev/backend.env
+    environment:
+      TZ: Asia/Tokyo
     command: celery -A saleslist_backend beat -l info
     volumes:
       - ../../../saleslist-backend:/app
@@ -105,6 +114,8 @@ services:
     container_name: saleslist_frontend
     env_file:
       - ../../env/dev/frontend.env
+    environment:
+      TZ: Asia/Tokyo
     ports:
       - "${FRONTEND_PORT:-3010}:3000"
     depends_on:
