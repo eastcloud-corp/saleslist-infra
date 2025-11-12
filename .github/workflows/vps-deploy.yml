@@ -3,7 +3,7 @@ name: Deploy to Sakura VPS
 on:
   push:
     tags:
-      - 'deploy-*'
+      - 'v*'
   workflow_dispatch:
 
 env:
