@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: saleslist_prod_user
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=ja_JP.UTF-8"
+      TZ: Asia/Tokyo
     ports:
       - "5432:5432"
     volumes:
@@ -23,6 +24,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: saleslist_redis_prd
+    environment:
+      TZ: Asia/Tokyo
     ports:
       - "6379:6379"
     volumes:
@@ -56,6 +59,7 @@ services:
       CORS_ALLOW_ALL_ORIGINS: ${CORS_ALLOW_ALL_ORIGINS}
       REDIS_URL: ${REDIS_URL}
       PROJECT_LOG_DIR: /app/logs
+      TZ: Asia/Tokyo
     ports:
       - "8000:8000"
     volumes:
@@ -95,7 +99,10 @@ services:
       CORS_ALLOW_ALL_ORIGINS: ${CORS_ALLOW_ALL_ORIGINS}
       REDIS_URL: ${REDIS_URL}
       PROJECT_LOG_DIR: /app/logs
-    command: celery -A saleslist_backend worker -l info
+      TZ: Asia/Tokyo
+    command: >
+      sh -c "mkdir -p /app/logs &&
+             celery -A saleslist_backend worker -l info --logfile /app/logs/celery-worker.log"
     depends_on:
       db:
         condition: service_healthy
@@ -126,7 +133,10 @@ services:
       CORS_ALLOW_ALL_ORIGINS: ${CORS_ALLOW_ALL_ORIGINS}
       REDIS_URL: ${REDIS_URL}
       PROJECT_LOG_DIR: /app/logs
-    command: celery -A saleslist_backend beat -l info
+      TZ: Asia/Tokyo
+    command: >
+      sh -c "mkdir -p /app/logs &&
+             celery -A saleslist_backend beat -l info --logfile /app/logs/celery-beat.log"
     depends_on:
       redis:
         condition: service_healthy
@@ -150,6 +160,7 @@ services:
       PORT: 3000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_ENVIRONMENT: ${NEXT_PUBLIC_ENVIRONMENT}
+      TZ: Asia/Tokyo
     ports:
       - "3000:3000"
     volumes:

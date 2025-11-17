@@ -3,7 +3,7 @@ name: Deploy to Sakura VPS
 on:
   push:
     tags:
-      - 'deploy-*'
+      - 'v*'
   workflow_dispatch:
 
 env:
@@ -52,10 +52,20 @@ jobs:
 
       - name: Generate production env file
         run: |
-          cat <<'EOF' > bundle/saleslist-infra/docker-compose/prd/.env
+          escape_dollar() {
+            printf '%s' "$1" | sed 's/\$/$$/g'
+          }
+
+          DJANGO_SECRET_KEY_ESCAPED=$(escape_dollar "${{ secrets.DJANGO_SECRET_KEY }}")
+          DB_PASSWORD_ESCAPED=$(escape_dollar "${{ secrets.DB_PASSWORD }}")
+          POWERPLEXY_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.POWERPLEXY_API_KEY }}")
+          MFA_EMAIL_FROM_ESCAPED=$(escape_dollar "${{ secrets.MFA_EMAIL_FROM }}")
+          SENDGRID_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.SENDGRID_API_KEY }}")
+
+          cat <<EOF > bundle/saleslist-infra/docker-compose/prd/.env
           DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
           DJANGO_DEBUG=False
-          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY_ESCAPED
           DJANGO_ALLOWED_HOSTS=sales-navigator.east-cloud.jp,153.120.128.27,localhost
           CORS_ALLOWED_ORIGINS=https://sales-navigator.east-cloud.jp
           CORS_ALLOW_ALL_ORIGINS=False
@@ -63,19 +73,19 @@ jobs:
           DB_PORT=5432
           DB_NAME=saleslist_production
           DB_USER=saleslist_prod_user
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD=$DB_PASSWORD_ESCAPED
           REDIS_URL=redis://redis:6379/1
           CELERY_BROKER_URL=redis://redis:6379/1
           CELERY_RESULT_BACKEND=redis://redis:6379/1
           CSRF_TRUSTED_ORIGINS=https://sales-navigator.east-cloud.jp
           CSRF_COOKIE_SECURE=True
           SESSION_COOKIE_SECURE=True
-          POWERPLEXY_API_KEY=${{ secrets.POWERPLEXY_API_KEY }}
+          POWERPLEXY_API_KEY=$POWERPLEXY_API_KEY_ESCAPED
           POWERPLEXY_MONTHLY_COST_LIMIT=150
           POWERPLEXY_COST_PER_REQUEST=0.05
           POWERPLEXY_MODEL=sonar-medium
-          MFA_EMAIL_FROM=${{ secrets.MFA_EMAIL_FROM }}
-          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+          MFA_EMAIL_FROM=$MFA_EMAIL_FROM_ESCAPED
+          SENDGRID_API_KEY=$SENDGRID_API_KEY_ESCAPED
           NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp
           NEXT_PUBLIC_ENVIRONMENT=prd
           EOF
@@ -91,20 +101,29 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy to VPS
+      - name: Sync bundle to VPS
         run: |
           rsync -az --delete \
             --omit-dir-times --no-perms --no-owner --no-group \
             bundle/ ${VPS_USER}@${VPS_HOST}:${PROJECT_ROOT}/
 
+      - name: Prepare services (db/redis/backend + migrate)
+        run: |
           ssh ${VPS_USER}@${VPS_HOST} <<EOS
-          set -e
+          set -ex
           cd ${PROJECT_ROOT}
           sudo docker compose -f ${COMPOSE_FILE} pull backend frontend
           sudo docker compose -f ${COMPOSE_FILE} build --no-cache backend frontend worker beat
-          sudo docker compose -f ${COMPOSE_FILE} up -d db redis
-          sudo docker compose -f ${COMPOSE_FILE} run --rm backend python manage.py migrate
-          sudo docker compose -f ${COMPOSE_FILE} up -d backend worker beat frontend
+          sudo docker compose -f ${COMPOSE_FILE} up -d db redis backend
+          sudo docker compose -f ${COMPOSE_FILE} exec -T backend python manage.py migrate --noinput
+          EOS
+
+      - name: Recreate application services
+        run: |
+          ssh ${VPS_USER}@${VPS_HOST} <<EOS
+          set -ex
+          cd ${PROJECT_ROOT}
+          sudo docker compose -f ${COMPOSE_FILE} up -d --build --force-recreate backend worker beat frontend
           sudo docker builder prune -af
           sudo docker image prune -f
           EOS
