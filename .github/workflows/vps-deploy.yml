@@ -107,7 +107,7 @@ jobs:
             --omit-dir-times --no-perms --no-owner --no-group \
             bundle/ ${VPS_USER}@${VPS_HOST}:${PROJECT_ROOT}/
 
-      - name: Prepare services (db/redis/backend + migrate)
+      - name: Prepare services (db/redis/backend)
         run: |
           ssh ${VPS_USER}@${VPS_HOST} <<EOS
           set -ex
@@ -115,6 +115,13 @@ jobs:
           sudo docker compose -f ${COMPOSE_FILE} pull backend frontend
           sudo docker compose -f ${COMPOSE_FILE} build --no-cache backend frontend worker beat
           sudo docker compose -f ${COMPOSE_FILE} up -d db redis backend
+          EOS
+
+      - name: Run database migrations
+        run: |
+          ssh ${VPS_USER}@${VPS_HOST} <<EOS
+          set -ex
+          cd ${PROJECT_ROOT}
           sudo docker compose -f ${COMPOSE_FILE} exec -T backend python manage.py migrate --noinput
           EOS
 
