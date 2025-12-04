@@ -42,6 +42,9 @@ ARG NEXT_PUBLIC_ENVIRONMENT=dev
 RUN apt-get update && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install pnpm for production stage (needs root)
+RUN npm install -g pnpm
+
 # Copy package files for production (pnpm-lock.yaml is not needed as dependencies are already installed)
 COPY saleslist-front/package.json ./
 
@@ -69,9 +72,6 @@ ENV NEXT_PUBLIC_ENVIRONMENT=${NEXT_PUBLIC_ENVIRONMENT}
 
 # Expose port
 EXPOSE 3000
-
-# Install pnpm for production stage
-RUN npm install -g pnpm
 
 # Start Next.js
 CMD ["pnpm", "start"]
