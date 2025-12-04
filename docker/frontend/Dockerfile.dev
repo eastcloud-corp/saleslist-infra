@@ -2,9 +2,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Install dependencies
-COPY saleslist-front/package*.json ./
-RUN npm install --legacy-peer-deps
+COPY saleslist-front/package.json saleslist-front/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY saleslist-front/ .
@@ -16,4 +19,4 @@ ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 3000
 
 # Use development server with hot reload
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]

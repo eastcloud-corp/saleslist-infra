@@ -3,7 +3,7 @@ set -e
 
 # Start Next.js in the background
 cd /app
-npm start &
+pnpm start &
 
 # Wait for Next.js to start
 echo "Waiting for Next.js to start..."
