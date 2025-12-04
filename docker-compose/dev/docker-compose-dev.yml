@@ -105,6 +105,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8010
       - NEXT_PUBLIC_ENVIRONMENT=dev
       - NODE_ENV=development
+      - CI=true
     ports:
       - "${FRONTEND_PORT:-3010}:3000"
     volumes:
@@ -115,7 +116,7 @@ services:
       - /app/.next
     depends_on:
       - backend
-    command: sh -c "npm install -g pnpm && pnpm install && pnpm run dev"
+    command: sh -c "npm install -g pnpm && CI=true pnpm install && pnpm run dev"
 
 volumes:
   postgres_data:
