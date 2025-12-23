@@ -1,0 +1,12 @@
+# Slack Webhook Configuration
+# Copy this file to /opt/salesnav/.slack-config and set your webhook URL
+#
+# To get a Slack webhook URL:
+# 1. Go to https://api.slack.com/apps
+# 2. Create a new app or select an existing app
+# 3. Go to "Incoming Webhooks" and activate it
+# 4. Add a new webhook to your workspace
+# 5. Copy the webhook URL and paste it below
+
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
+

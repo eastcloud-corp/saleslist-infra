@@ -152,6 +152,21 @@ git push origin main
 ./scripts/check-frontend-errors.sh
 ```
 
+### Slack通知設定
+
+監視スクリプトはSlack通知に対応しています。設定方法は `docs/monitoring.md` を参照してください。
+
+```bash
+# Slack通知付きで監視を実行
+./scripts/monitor-containers.sh --alert --slack
+
+# コンテナ停止をチェック（Slack通知付き）
+./scripts/check-container-down.sh
+
+# Slack通知のテスト
+./scripts/slack-notify.sh "テスト通知" --level info
+```
+
 ## トラブルシューティング
 
 ### デプロイが失敗する場合

@@ -70,18 +70,68 @@
   - `frontend` サービスのヘルスチェック設定
   - `backend` サービスのヘルスチェック設定
 
+## Slack通知設定
+
+### Slack Webhook URLの設定
+
+1. Slack Webhook URLを取得
+   - https://api.slack.com/apps にアクセス
+   - アプリを作成または選択
+   - "Incoming Webhooks" を有効化
+   - ワークスペースにWebhookを追加
+   - Webhook URLをコピー
+
+2. サーバー上で設定ファイルを作成
+
+```bash
+# 設定ファイルを作成
+sudo nano /opt/salesnav/.slack-config
+
+# 以下の内容を記入（Webhook URLを実際の値に置き換え）
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
+
+# ファイルの権限を設定（読み取り専用）
+sudo chmod 600 /opt/salesnav/.slack-config
+```
+
+### 通知レベルの説明
+
+- **info**: 情報通知（通常は使用しない）
+- **warning**: 警告（CPU/メモリ使用率が高い、プロセス数が多いなど）
+- **error**: エラー（コンテナが停止、リソース不足など）
+- **critical**: 緊急（コンテナがダウン、システム障害など）
+
 ## 定期監視の設定
 
 ### Cronジョブの追加（推奨）
 
-サーバー上で以下のcronジョブを設定することで、定期的な監視が可能です：
+サーバー上で以下のcronジョブを設定することで、定期的な監視とSlack通知が可能です：
 
 ```bash
-# 5分ごとに監視を実行
-*/5 * * * * /opt/salesnav/saleslist-infra/scripts/monitor-containers.sh >> /var/log/salesnav/monitor-cron.log 2>&1
+# 5分ごとに監視を実行（Slack通知付き）
+*/5 * * * * /opt/salesnav/saleslist-infra/scripts/monitor-containers.sh --alert --slack >> /var/log/salesnav/monitor-cron.log 2>&1
+
+# 1分ごとにコンテナ停止をチェック（Slack通知付き）
+* * * * * /opt/salesnav/saleslist-infra/scripts/check-container-down.sh >> /var/log/salesnav/container-check.log 2>&1
 
 # 1時間ごとにエラーチェックを実行
 0 * * * * /opt/salesnav/saleslist-infra/scripts/check-frontend-errors.sh >> /var/log/salesnav/error-check.log 2>&1
+```
+
+### 手動実行（テスト用）
+
+```bash
+# 監視スクリプトの実行（Slack通知なし）
+./scripts/monitor-containers.sh --alert
+
+# 監視スクリプトの実行（Slack通知あり）
+./scripts/monitor-containers.sh --alert --slack
+
+# コンテナ停止チェック（Slack通知あり）
+./scripts/check-container-down.sh
+
+# Slack通知のテスト
+./scripts/slack-notify.sh "テスト通知です" --level info
 ```
 
 ### 手動実行
@@ -161,10 +211,45 @@ Next.js 15のServer Actions機能に関するエラーが発生する場合：
 2. クライアント側のフォーム送信を確認
    - ブラウザの開発者ツールでネットワークリクエストを確認
 
+## Slack通知機能
+
+### 通知されるイベント
+
+以下のイベントが発生した場合、Slackに通知が送信されます：
+
+1. **コンテナ停止** (critical)
+   - いずれかのコンテナが停止した場合
+
+2. **CPU使用率超過** (error)
+   - コンテナのCPU使用率が80%を超えた場合
+
+3. **メモリ使用率超過** (error)
+   - コンテナのメモリ使用率が80%を超えた場合
+
+4. **プロセス数超過** (warning)
+   - コンテナ内のプロセス数が50を超えた場合
+
+5. **curlプロセス暴走** (warning)
+   - コンテナ内のcurlプロセスが10を超えた場合（ヘルスチェック問題の可能性）
+
+6. **ディスク使用率超過** (warning)
+   - ディスク使用率が85%を超えた場合
+
+### 通知メッセージの形式
+
+Slack通知には以下の情報が含まれます：
+- サーバー名（hostname）
+- 発生時刻
+- アラートレベル（色分け）
+- 詳細メッセージ
+
 ## 関連ファイル
 
-- `scripts/monitor-containers.sh` - コンテナ監視スクリプト
+- `scripts/monitor-containers.sh` - コンテナ監視スクリプト（Slack通知対応）
+- `scripts/check-container-down.sh` - コンテナ停止チェックスクリプト
+- `scripts/slack-notify.sh` - Slack通知送信スクリプト
 - `scripts/check-frontend-errors.sh` - エラー確認スクリプト
+- `scripts/.slack-config.example` - Slack設定ファイルのテンプレート
 - `docker-compose/prd/docker-compose.yml` - ヘルスチェック設定
 - `docker/frontend/Dockerfile.prod` - フロントエンドDockerfile
 - `saleslist-front/next.config.mjs` - Next.js設定
