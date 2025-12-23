@@ -52,7 +52,8 @@ COPY saleslist-front/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
+# Copy both next.config.js and next.config.mjs if they exist
+COPY --from=builder /app/next.config.* ./
 COPY --from=builder /app/saleslist-docs ./saleslist-docs
 COPY --from=builder /app/user-guide.md ./user-guide.md
 

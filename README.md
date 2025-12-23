@@ -131,6 +131,27 @@ git push origin main
 ./saleslist-infra/scripts/health-check.sh [staging|production]
 ```
 
+## 監視
+
+詳細な監視設定と運用方法は `docs/monitoring.md` を参照してください。
+
+### コンテナ監視
+
+```bash
+# コンテナの状態を監視（CPU、メモリ、プロセス数）
+./scripts/monitor-containers.sh
+
+# アラートモード（閾値超過時に警告）
+./scripts/monitor-containers.sh --alert
+```
+
+### フロントエンドエラー確認
+
+```bash
+# フロントエンドコンテナのエラーを分析
+./scripts/check-frontend-errors.sh
+```
+
 ## トラブルシューティング
 
 ### デプロイが失敗する場合
