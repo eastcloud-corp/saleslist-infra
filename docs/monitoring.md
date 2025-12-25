@@ -74,12 +74,17 @@
 
 ### Slack Webhook URLの設定
 
-1. Slack Webhook URLを取得
-   - https://api.slack.com/apps にアクセス
-   - アプリを作成または選択
-   - "Incoming Webhooks" を有効化
-   - ワークスペースにWebhookを追加
-   - Webhook URLをコピー
+**重要**: Slack通知を使用するには、Slackアプリの作成が必要です。ただし、Incoming Webhooksを使う方法が最も簡単で、約5分で設定できます。
+
+詳細な手順は `docs/slack-setup-guide.md` を参照してください。
+
+**簡単な手順**:
+1. https://api.slack.com/apps にアクセス
+2. "Create New App" → "From scratch" を選択
+3. アプリ名とワークスペースを選択
+4. "Incoming Webhooks" → "Activate Incoming Webhooks" をON
+5. "Add New Webhook to Workspace" でチャンネルを選択
+6. 生成されたWebhook URLをコピー
 
 2. サーバー上で設定ファイルを作成
 
