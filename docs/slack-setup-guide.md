@@ -35,7 +35,14 @@ Slack通知機能を使用するには、Slackアプリを作成してIncoming W
 
 ### 5. サーバー上で設定
 
+**重要**: `.slack-config`ファイルは`.gitignore`に追加されているため、GitHubにはコミットされません。本番環境では、サーバー上で直接設定ファイルを作成する必要があります。
+
+#### 方法1: 設定ファイルを作成（推奨）
+
 ```bash
+# SSHでサーバーに接続
+ssh -i ~/.ssh/salesnav_vps_key.key ubuntu@153.120.128.27
+
 # 設定ファイルを作成
 sudo nano /opt/salesnav/.slack-config
 
@@ -45,6 +52,18 @@ SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
 # ファイルの権限を設定（読み取り専用）
 sudo chmod 600 /opt/salesnav/.slack-config
 ```
+
+#### 方法2: 環境変数で設定
+
+サーバー上の`.bashrc`や`.profile`に環境変数として設定することも可能です：
+
+```bash
+# サーバー上で実行
+echo 'export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"' | sudo tee -a /opt/salesnav/.slack-env
+sudo chmod 600 /opt/salesnav/.slack-env
+```
+
+ただし、スクリプトは現在、環境変数もチェックするため、この方法でも動作します。
 
 ### 6. テスト
 

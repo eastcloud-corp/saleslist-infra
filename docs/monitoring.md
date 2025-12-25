@@ -88,7 +88,12 @@
 
 2. サーバー上で設定ファイルを作成
 
+**重要**: `.slack-config`ファイルは`.gitignore`に追加されているため、GitHubにはコミットされません。本番環境では、サーバー上で直接設定ファイルを作成する必要があります。
+
 ```bash
+# SSHでサーバーに接続
+ssh -i ~/.ssh/salesnav_vps_key.key ubuntu@153.120.128.27
+
 # 設定ファイルを作成
 sudo nano /opt/salesnav/.slack-config
 
@@ -98,6 +103,11 @@ SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
 # ファイルの権限を設定（読み取り専用）
 sudo chmod 600 /opt/salesnav/.slack-config
 ```
+
+**注意**: 
+- ローカル開発環境では `scripts/.slack-config` を使用できます（Gitにはコミットされません）
+- 本番環境では `/opt/salesnav/.slack-config` を使用します
+- 環境変数 `SLACK_WEBHOOK_URL` でも設定可能です
 
 ### 通知レベルの説明
 
