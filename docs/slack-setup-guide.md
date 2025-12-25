@@ -33,39 +33,36 @@ Slack通知機能を使用するには、Slackアプリを作成してIncoming W
    - 形式: `https://hooks.slack.com/services/***/***/***`
 2. このURLをサーバー上の設定ファイルに保存
 
-### 5. サーバー上で設定
+### 5. GitHub Secretsに設定（推奨）
 
-**重要**: `.slack-config`ファイルは`.gitignore`に追加されているため、GitHubにはコミットされません。本番環境では、サーバー上で直接設定ファイルを作成する必要があります。
+**本番環境では、GitHub Secretsに設定することで、デプロイ時に自動的に`.slack-config`ファイルが生成されます。**
 
-#### 方法1: 設定ファイルを作成（推奨）
+1. GitHubリポジトリの「Settings」→「Secrets and variables」→「Actions」に移動
+2. 「New repository secret」をクリック
+3. 以下を設定：
+   - **Name**: `SLACK_WEBHOOK_URL`
+   - **Secret**: コピーしたWebhook URLを貼り付け
+4. 「Add secret」をクリック
+
+**次のデプロイ時に自動的に設定ファイルが生成されます。**
+
+### 6. 手動でサーバーに設定する場合（GitHub Secretsを使わない場合）
 
 ```bash
-# SSHでサーバーに接続
-ssh -i ~/.ssh/salesnav_vps_key.key ubuntu@153.120.128.27
+# サーバーにSSH接続
+ssh ubuntu@153.120.128.27
 
 # 設定ファイルを作成
-sudo nano /opt/salesnav/.slack-config
+sudo nano /opt/salesnav/saleslist-infra/scripts/.slack-config
 
 # 以下の内容を記入（Webhook URLを実際の値に置き換え）
 SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
 
 # ファイルの権限を設定（読み取り専用）
-sudo chmod 600 /opt/salesnav/.slack-config
+sudo chmod 600 /opt/salesnav/saleslist-infra/scripts/.slack-config
 ```
 
-#### 方法2: 環境変数で設定
-
-サーバー上の`.bashrc`や`.profile`に環境変数として設定することも可能です：
-
-```bash
-# サーバー上で実行
-echo 'export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"' | sudo tee -a /opt/salesnav/.slack-env
-sudo chmod 600 /opt/salesnav/.slack-env
-```
-
-ただし、スクリプトは現在、環境変数もチェックするため、この方法でも動作します。
-
-### 6. テスト
+### 7. テスト
 
 ```bash
 # 通知のテスト

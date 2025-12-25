@@ -63,6 +63,7 @@ SAKURA_ACCESS_TOKEN=your_sakura_api_access_token
 SAKURA_ACCESS_TOKEN_SECRET=your_sakura_api_secret
 DB_PASSWORD=your_secure_database_password
 DJANGO_SECRET_KEY=your_django_secret_key_50_chars_long
+SLACK_WEBHOOK_URL=your_slack_webhook_url (optional)
 ```
 
 ### 4. 初期セットアップ手順
