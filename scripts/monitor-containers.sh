@@ -35,9 +35,14 @@ PROCESS_COUNT_THRESHOLD=50
 DISK_THRESHOLD=85
 
 # Load Slack webhook URL if available
-CONFIG_FILE="/opt/salesnav/.slack-config"
-if [ -f "$CONFIG_FILE" ]; then
-    source "$CONFIG_FILE"
+# Try multiple locations: local (scripts/.slack-config), server (/opt/salesnav/.slack-config)
+LOCAL_CONFIG="$SCRIPT_DIR/.slack-config"
+SERVER_CONFIG="/opt/salesnav/.slack-config"
+
+if [ -f "$LOCAL_CONFIG" ]; then
+    source "$LOCAL_CONFIG"
+elif [ -f "$SERVER_CONFIG" ]; then
+    source "$SERVER_CONFIG"
 fi
 
 log_message() {

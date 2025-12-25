@@ -9,11 +9,18 @@ MESSAGE="${1:-}"
 LEVEL="${2:---level info}"
 
 # Load Slack webhook URL from environment or config file
-CONFIG_FILE="/opt/salesnav/.slack-config"
-if [ -f "$CONFIG_FILE" ]; then
-    source "$CONFIG_FILE"
+# Try multiple locations: local (scripts/.slack-config), server (/opt/salesnav/.slack-config)
+SCRIPT_DIR=$(cd $(dirname $0) && pwd)
+LOCAL_CONFIG="$SCRIPT_DIR/.slack-config"
+SERVER_CONFIG="/opt/salesnav/.slack-config"
+
+if [ -f "$LOCAL_CONFIG" ]; then
+    source "$LOCAL_CONFIG"
+elif [ -f "$SERVER_CONFIG" ]; then
+    source "$SERVER_CONFIG"
 fi
 
+# Also check environment variable
 SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"
 
 if [ -z "$SLACK_WEBHOOK_URL" ]; then
@@ -27,18 +34,21 @@ if [ -z "$MESSAGE" ]; then
 fi
 
 # Determine color and emoji based on level
-case "$LEVEL" in
-    --level critical|critical)
+# Remove --level prefix if present
+LEVEL_CLEAN="${LEVEL#--level }"
+
+case "$LEVEL_CLEAN" in
+    critical)
         COLOR="danger"
         EMOJI="🚨"
         TITLE="Critical Alert"
         ;;
-    --level error|error)
+    error)
         COLOR="danger"
         EMOJI="❌"
         TITLE="Error Alert"
         ;;
-    --level warning|warning)
+    warning)
         COLOR="warning"
         EMOJI="⚠️"
         TITLE="Warning Alert"
