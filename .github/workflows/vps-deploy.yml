@@ -59,6 +59,7 @@ jobs:
           DJANGO_SECRET_KEY_ESCAPED=$(escape_dollar "${{ secrets.DJANGO_SECRET_KEY }}")
           DB_PASSWORD_ESCAPED=$(escape_dollar "${{ secrets.DB_PASSWORD }}")
           POWERPLEXY_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.POWERPLEXY_API_KEY }}")
+          CORPORATE_NUMBER_API_TOKEN_ESCAPED=$(escape_dollar "${{ secrets.CORPORATE_NUMBER_API_TOKEN }}")
           MFA_EMAIL_FROM_ESCAPED=$(escape_dollar "${{ secrets.MFA_EMAIL_FROM }}")
           SENDGRID_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.SENDGRID_API_KEY }}")
           SLACK_WEBHOOK_URL_ESCAPED=$(escape_dollar "${{ secrets.SLACK_WEBHOOK_URL }}")
@@ -85,6 +86,7 @@ jobs:
           POWERPLEXY_MONTHLY_COST_LIMIT=150
           POWERPLEXY_COST_PER_REQUEST=0.05
           POWERPLEXY_MODEL=sonar-medium
+          CORPORATE_NUMBER_API_TOKEN=$CORPORATE_NUMBER_API_TOKEN_ESCAPED
           MFA_EMAIL_FROM=$MFA_EMAIL_FROM_ESCAPED
           SENDGRID_API_KEY=$SENDGRID_API_KEY_ESCAPED
           NEXT_PUBLIC_API_URL=https://sales-navigator.east-cloud.jp
