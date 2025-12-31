@@ -63,6 +63,7 @@ SAKURA_ACCESS_TOKEN=your_sakura_api_access_token
 SAKURA_ACCESS_TOKEN_SECRET=your_sakura_api_secret
 DB_PASSWORD=your_secure_database_password
 DJANGO_SECRET_KEY=your_django_secret_key_50_chars_long
+SLACK_WEBHOOK_URL=your_slack_webhook_url (optional)
 ```
 
 ### 4. 初期セットアップ手順
@@ -129,6 +130,42 @@ git push origin main
 ```bash
 # デプロイ後の動作確認
 ./saleslist-infra/scripts/health-check.sh [staging|production]
+```
+
+## 監視
+
+詳細な監視設定と運用方法は `docs/monitoring.md` を参照してください。
+
+### コンテナ監視
+
+```bash
+# コンテナの状態を監視（CPU、メモリ、プロセス数）
+./scripts/monitor-containers.sh
+
+# アラートモード（閾値超過時に警告）
+./scripts/monitor-containers.sh --alert
+```
+
+### フロントエンドエラー確認
+
+```bash
+# フロントエンドコンテナのエラーを分析
+./scripts/check-frontend-errors.sh
+```
+
+### Slack通知設定
+
+監視スクリプトはSlack通知に対応しています。設定方法は `docs/monitoring.md` を参照してください。
+
+```bash
+# Slack通知付きで監視を実行
+./scripts/monitor-containers.sh --alert --slack
+
+# コンテナ停止をチェック（Slack通知付き）
+./scripts/check-container-down.sh
+
+# Slack通知のテスト
+./scripts/slack-notify.sh "テスト通知" --level info
 ```
 
 ## トラブルシューティング
