@@ -114,7 +114,7 @@ jobs:
       - name: Setup Slack configuration
         run: |
           if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
-            ssh ${VPS_USER}@${VPS_HOST} <<'EOS'
+            ssh ${VPS_USER}@${VPS_HOST} <<EOS
           set -ex
           mkdir -p ${PROJECT_ROOT}/saleslist-infra/scripts
           cat > ${PROJECT_ROOT}/saleslist-infra/scripts/.slack-config <<'EOF'
