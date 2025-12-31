@@ -1,0 +1,17 @@
+# Slack Webhook Configuration
+# Copy this file to /opt/salesnav/.slack-config and set your webhook URL
+#
+# 詳細な設定手順は docs/slack-setup-guide.md を参照してください
+#
+# 簡単な手順:
+# 1. https://api.slack.com/apps にアクセス
+# 2. "Create New App" → "From scratch" を選択
+# 3. アプリ名とワークスペースを選択
+# 4. "Incoming Webhooks" → "Activate Incoming Webhooks" をON
+# 5. "Add New Webhook to Workspace" でチャンネルを選択
+# 6. 生成されたWebhook URLをコピーして下記に貼り付け
+#
+# 注意: Webhook URLは秘密情報です。Gitにコミットしないでください。
+
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/***/***/***"
+
