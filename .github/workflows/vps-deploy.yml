@@ -125,6 +125,19 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           EOF
           chmod 600 ${PROJECT_ROOT}/saleslist-infra/scripts/.slack-config
+
+          # Also inject to docker-compose env file so containers can read it.
+          ENV_FILE="${PROJECT_ROOT}/saleslist-infra/docker-compose/prd/.env"
+          if [ -f "$ENV_FILE" ]; then
+            tmp="${ENV_FILE}.tmp.$$"
+            # Remove existing key if present
+            grep -v '^SLACK_WEBHOOK_URL=' "$ENV_FILE" > "$tmp" || true
+            mv "$tmp" "$ENV_FILE"
+            # Append fresh value (URL, safe without quotes)
+            echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> "$ENV_FILE"
+          else
+            echo "⚠️  .env not found: $ENV_FILE"
+          fi
           EOS
           else
             echo "⚠️  SLACK_WEBHOOK_URL secret is not set. Skipping Slack configuration."
