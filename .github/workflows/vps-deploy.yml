@@ -70,6 +70,7 @@ jobs:
           MFA_EMAIL_FROM_ESCAPED=$(escape_dollar "${{ secrets.MFA_EMAIL_FROM }}")
           SENDGRID_API_KEY_ESCAPED=$(escape_dollar "${{ secrets.SENDGRID_API_KEY }}")
           SLACK_WEBHOOK_URL_ESCAPED=$(escape_dollar "${{ secrets.SLACK_WEBHOOK_URL }}")
+          AI_AUTO_MERGE_CONFIDENCE_THRESHOLD_ESCAPED=$(escape_dollar "${{ secrets.AI_AUTO_MERGE_CONFIDENCE_THRESHOLD }}")
 
           cat <<EOF > bundle/saleslist-infra/docker-compose/prd/.env
           DJANGO_SETTINGS_MODULE=saleslist_backend.settings.prod
@@ -104,6 +105,11 @@ jobs:
           EOF
           if [ -n "${{ secrets.AI_ENRICHMENT_ENABLED }}" ]; then
             echo "AI_ENRICHMENT_ENABLED=${{ secrets.AI_ENRICHMENT_ENABLED }}" >> bundle/saleslist-infra/docker-compose/prd/.env
+          fi
+
+          # 75以上をレビュー無しで自動反映するための閾値
+          if [ -n "${{ secrets.AI_AUTO_MERGE_CONFIDENCE_THRESHOLD }}" ]; then
+            echo "AI_AUTO_MERGE_CONFIDENCE_THRESHOLD=$AI_AUTO_MERGE_CONFIDENCE_THRESHOLD_ESCAPED" >> bundle/saleslist-infra/docker-compose/prd/.env
           fi
 
       - name: Set up SSH
